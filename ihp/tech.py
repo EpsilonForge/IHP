@@ -448,7 +448,6 @@ margin = 0.5
 
 
 def get_layer_stack(
-    thickness_si: float = 10.0,  # Silicon substrate
     thickness_metal: float = 0.5,  # Metal thickness
     thickness_via: float = 0.3,  # Via thickness
     substrate_thickness: float = 300.0,  # Full substrate
@@ -456,7 +455,6 @@ def get_layer_stack(
     """Returns IHP PDK LayerStack for 3D visualization and simulation.
 
     Args:
-        thickness_si: Silicon layer thickness in um.
         thickness_metal: Metal layer thickness in um.
         thickness_via: Via layer thickness in um.
         substrate_thickness: Substrate thickness in um.
