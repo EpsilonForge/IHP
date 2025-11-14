@@ -1,12 +1,17 @@
 info:
-  length: 10
+  length: 0.8
   model: rsil
-  n_squares: 12.5
-  resistance: 87.5
+  n_squares: 1
+  resistance: 7
   sheet_resistance: 7
   width: 0.8
-name: rsil_W0p8_L10_RNone_Mrsil
+name: rsil_W0p8_L0p5_RNone_Mrsil_LPGatPolydrawing_LSSalBlockd_cd149686
 settings:
-  length: 10
+  layer_contact: Contdrawing
+  layer_metal1: Metal1drawing
+  layer_poly: GatPolydrawing
+  layer_res_mark: RESdrawing
+  layer_salblock: SalBlockdrawing
+  length: 0.5
   model: rsil
   width: 0.8

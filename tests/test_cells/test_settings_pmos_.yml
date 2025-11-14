@@ -5,8 +5,14 @@ info:
   nf: 1
   type: pmos
   width: 1
-name: pmos_W1_L0p13_N1_M1_Msg13_lv_pmos
+name: pmos_W1_L0p13_N1_M1_Msg13_lv_pmos_LNNWelldrawing_LGGatP_146a1809
 settings:
+  layer_activ: Activdrawing
+  layer_cont: Contdrawing
+  layer_gatpoly: GatPolydrawing
+  layer_metal1: Metal1drawing
+  layer_nwell: NWelldrawing
+  layer_psd: pSDdrawing
   length: 0.13
   m: 1
   model: sg13_lv_pmos

@@ -5,8 +5,14 @@ info:
   resistance: 3750
   sheet_resistance: 300
   width: 0.8
-name: rppd_W0p8_L10_RNone_Mrppd
+name: rppd_W0p8_L10_RNone_Mrppd_LPGatPolydrawing_LPpSDdrawing_6a315260
 settings:
+  layer_contact: Contdrawing
+  layer_metal1: Metal1drawing
+  layer_poly: GatPolydrawing
+  layer_polyres: PolyResdrawing
+  layer_psd: pSDdrawing
+  layer_res_mark: RESdrawing
   length: 10
   model: rppd
   width: 0.8

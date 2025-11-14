@@ -5,8 +5,14 @@ info:
   resistance: 19285.714
   sheet_resistance: 1350
   width: 1.4
-name: rhigh_W1p4_L20_RNone_Mrhigh
+name: rhigh_W1p4_L20_RNone_Mrhigh_LNNWelldrawing_LPGatPolydra_37f2321c
 settings:
+  layer_contact: Contdrawing
+  layer_metal1: Metal1drawing
+  layer_nwell: NWelldrawing
+  layer_poly: GatPolydrawing
+  layer_polyres: PolyResdrawing
+  layer_res_mark: RESdrawing
   length: 20
   model: rhigh
   width: 1.4

@@ -4,8 +4,16 @@ info:
   nf: 10
   type: esd_nmos
   width: 50
-name: esd_nmos_W50_L0p5_N10_Mesd_nmos
+name: esd_nmos_W50_L0p5_N10_Mesd_nmos_LPPWelldrawing_LAActivd_e4e1883b
 settings:
+  layer_activ: Activdrawing
+  layer_cont: Contdrawing
+  layer_esd: Recogesd
+  layer_gatpoly: GatPolydrawing
+  layer_metal1: Metal1drawing
+  layer_metal2: Metal2drawing
+  layer_nsd: nSDdrawing
+  layer_pwell: PWelldrawing
   length: 0.5
   model: esd_nmos
   nf: 10
