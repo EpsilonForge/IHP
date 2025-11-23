@@ -1,19 +1,22 @@
 info:
-  diameter: 24.68
+  diameter: 25.84
   inductance: 0.0
-  length: 86.315
   model: inductor2
   resistance: 1.386
   space: 2.1
   turns: 2
   width: 2
-name: inductor3_W2_S2p1_D24p68_R1p386_I2p215em1_T2_LMTopMetal_a8f75e85
+name: inductor3_W2_S2p1_D25p84_VW0p9_R1p386_I2p215em1_T1L30_T_d6a5eb3b
 settings:
-  diameter: 24.68
+  diameter: 25.84
   inductance: 0.0
+  layer_ind_pin: INDpin
   layer_inductor: INDdrawing
-  layer_metal: TopMetal2drawing
-  layer_metal_pin: TopMetal2pin
+  layer_metal_1: TopMetal1drawing
+  layer_metal_1_pin: TopMetal2pin
+  layer_metal_2: TopMetal2drawing
+  layer_metal_2_pin: TopMetal2pin
+  layer_via: TopVia2drawing
   layers_no_fill:
   - Activnofill
   - GatPolynofill
@@ -25,7 +28,10 @@ settings:
   - TopMetal1nofill
   - TopMetal2nofill
   - PWellblock
+  - NoRCXdrawing
   resistance: 1.386
   space: 2.1
+  terminal_1_length: 30
   turns: 2
+  vias_width: 0.9
   width: 2
