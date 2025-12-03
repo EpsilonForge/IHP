@@ -1,17 +1,20 @@
 info:
-  length: 0.8
+  dx: 0.5
+  dy: 0.5
   model: rsil
   n_squares: 1
   resistance: 7
   sheet_resistance: 7
-  width: 0.8
-name: rsil_W0p8_L0p5_RNone_Mrsil_LPGatPolydrawing_LSSalBlockd_cd149686
+name: rsil_D0p5_D0p5_RNone_Mrsil_LPPolyResdrawing_LHHeatResdr_0d134d2b
 settings:
+  dx: 0.5
+  dy: 0.5
+  layer_block: EXTBlockdrawing
   layer_contact: Contdrawing
+  layer_gate: GatPolydrawing
+  layer_heat: HeatResdrawing
   layer_metal1: Metal1drawing
-  layer_poly: GatPolydrawing
+  layer_metal1_pin: Metal1pin
+  layer_poly: PolyResdrawing
   layer_res_mark: RESdrawing
-  layer_salblock: SalBlockdrawing
-  length: 0.5
   model: rsil
-  width: 0.8
