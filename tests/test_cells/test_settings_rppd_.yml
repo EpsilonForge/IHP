@@ -1,18 +1,21 @@
 info:
-  length: 10
-  model: rppd
-  n_squares: 12.5
-  resistance: 3750
+  dx: 0.5
+  dy: 0.5
+  model: rsil
+  n_squares: 1
+  resistance: 300
   sheet_resistance: 300
-  width: 0.8
-name: rppd_W0p8_L10_RNone_Mrppd_LPGatPolydrawing_LPpSDdrawing_6a315260
+name: rppd_D0p5_D0p5_RNone_Mrsil_LPPolyResdrawing_LHHeatResdr_63b006ca
 settings:
+  dx: 0.5
+  dy: 0.5
+  layer_block: EXTBlockdrawing
   layer_contact: Contdrawing
+  layer_gate: GatPolydrawing
+  layer_heat: HeatResdrawing
   layer_metal1: Metal1drawing
-  layer_poly: GatPolydrawing
-  layer_polyres: PolyResdrawing
-  layer_psd: pSDdrawing
-  layer_res_mark: RESdrawing
-  length: 10
-  model: rppd
-  width: 0.8
+  layer_metal1_pin: Metal1pin
+  layer_pSD: pSDdrawing
+  layer_poly: PolyResdrawing
+  layer_sal_block: SalBlockdrawing
+  model: rsil

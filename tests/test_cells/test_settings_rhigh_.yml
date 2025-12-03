@@ -1,18 +1,22 @@
 info:
-  length: 20
-  model: rhigh
-  n_squares: 14.286
-  resistance: 19285.714
-  sheet_resistance: 1350
-  width: 1.4
-name: rhigh_W1p4_L20_RNone_Mrhigh_LNNWelldrawing_LPGatPolydra_37f2321c
+  dx: 0.5
+  dy: 0.96
+  model: rsil
+  n_squares: 1.92
+  resistance: 576
+  sheet_resistance: 300
+name: rhigh_D0p96_D0p5_RNone_Mrsil_LPPolyResdrawing_LHHeatRes_891e5ff0
 settings:
+  dx: 0.5
+  dy: 0.96
+  layer_block: EXTBlockdrawing
   layer_contact: Contdrawing
+  layer_gate: GatPolydrawing
+  layer_heat: HeatResdrawing
   layer_metal1: Metal1drawing
-  layer_nwell: NWelldrawing
-  layer_poly: GatPolydrawing
-  layer_polyres: PolyResdrawing
-  layer_res_mark: RESdrawing
-  length: 20
-  model: rhigh
-  width: 1.4
+  layer_metal1_pin: Metal1pin
+  layer_nSD: nSDdrawing
+  layer_pSD: pSDdrawing
+  layer_poly: PolyResdrawing
+  layer_sal_block: SalBlockdrawing
+  model: rsil
