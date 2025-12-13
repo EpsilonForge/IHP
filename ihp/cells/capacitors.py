@@ -21,40 +21,38 @@ def cmim(
     capacitance: float | None = None,
     model: str = "cmim",
     layer_metal5: LayerSpec = "Metal5drawing",
-    layer_metal5_pin: LayerSpec = "Metal5pin",
     layer_mim: LayerSpec = "MIMdrawing",
     layer_topmetal1: LayerSpec = "TopMetal1drawing",
-    layer_topmetal1_pin: LayerSpec = "TopMetal1pin",
     layer_vmim: LayerSpec = "Vmimdrawing",
 ) -> Component:
     """Create an MIM (Metal-Insulator-Metal) capacitor.
 
     Args:
-        width: MIM plate Y-size (um). Scales the MIM/top-plate in Y.
-        length: MIM plate X-size (um). Scales the MIM/top-plate in X.
+        width: MIM plate X-size (um). Scales the MIM/top-plate in X.
+        length: MIM plate Y-size (um). Scales the MIM/top-plate in Y.
         capacitance: Optional (kept for compatibility; not used for geometry).
         model: Device model name stored in metadata.
         layer_metal5: Metal5 drawing layer.
-        layer_metal5_pin: Metal5 pin layer.
         layer_mim: MIM dielectric layer.
         layer_topmetal1: TopMetal1 drawing layer.
-        layer_topmetal1_pin: TopMetal1 pin layer.
         layer_vmim: Vmimdrawing (small tile) layer.
 
     Returns:
-        MIM capacitor component
+        MIM capacitor component.
     """
     c = Component()
 
     # Geometrical constants
     METAL_5_MIM_MARGIN = 0.6
-    METAL_1_MIM_MARGIN = 0.345
+    METAL_1_MIM_MARGIN = 0.34
+    metal_1_mim_margin_x = -0.004 * width + 0.625
     VMIM_TILE_LENGTH = 0.42
     VMIM_TILE_GAP = 0.84
+    GRID_STEP = 0.005
 
     # Grid snapping
-    length = round(length / 0.005) * 0.005
-    width = round(width / 0.005) * 0.005
+    length = round(length / GRID_STEP) * GRID_STEP
+    width = round(width / GRID_STEP) * GRID_STEP
 
     # Calculate capacitance
     if capacitance is None:
@@ -62,26 +60,34 @@ def cmim(
         area = width * length
         capacitance = area * CAP_DENSITY
 
-    # Draw MIM layer
-    add_rect(c, size=(length, width), layer=layer_mim, origin=(0.0, 0.0))
+    # Draw MIM layer (X = width, Y = length)
+    add_rect(c, size=(width, length), layer=layer_mim, origin=(0.0, 0.0))
 
-    # Draw metal 5 layers
-    metal_5_length = length + 2 * METAL_5_MIM_MARGIN
-    metal_5_width= width + 2 * METAL_5_MIM_MARGIN
-    add_rect(c, size=(metal_5_length, metal_5_width), layer=layer_metal5, origin=(-METAL_5_MIM_MARGIN, -METAL_5_MIM_MARGIN))
-    add_rect(c, size=(metal_5_length, metal_5_width), layer=layer_metal5_pin, origin=(-METAL_5_MIM_MARGIN, -METAL_5_MIM_MARGIN))
+    # Draw Metal5 layers (bottom plate, margin around MIM)
+    metal_5_size_x = width + 2 * METAL_5_MIM_MARGIN
+    metal_5_size_y = length + 2 * METAL_5_MIM_MARGIN
+    add_rect(
+        c,
+        size=(metal_5_size_x, metal_5_size_y),
+        layer=layer_metal5,
+        origin=(-METAL_5_MIM_MARGIN, -METAL_5_MIM_MARGIN),
+    )
 
-    # Draw metal 1 layers
-    metal_1_length = length - 2 * METAL_1_MIM_MARGIN
-    metal_1_width = width - 2 * METAL_1_MIM_MARGIN
-    add_rect(c, size=(metal_1_length, metal_1_width), layer=layer_topmetal1, origin=(METAL_1_MIM_MARGIN, METAL_1_MIM_MARGIN))
-    add_rect(c, size=(metal_1_length, metal_1_width), layer=layer_topmetal1_pin, origin=(METAL_1_MIM_MARGIN, METAL_1_MIM_MARGIN))
+    # Draw TopMetal1 layers (top plate, inset from MIM)
+    metal_1_size_x = width - 2 * metal_1_mim_margin_x
+    metal_1_size_y = length - 2 * METAL_1_MIM_MARGIN
+    add_rect(
+        c,
+        size=(metal_1_size_x, metal_1_size_y),
+        layer=layer_topmetal1,
+        origin=(metal_1_mim_margin_x, METAL_1_MIM_MARGIN),
+    )
 
-    # Draw VMim layers
+    # Draw VMIM tiles inside the top plate
     metal_1_vmim_margin = VMIM_TILE_LENGTH
     tile_pitch = VMIM_TILE_LENGTH + VMIM_TILE_GAP
-    usable_x = length - 2 * metal_1_vmim_margin
-    usable_y = width - 2 * metal_1_vmim_margin
+    usable_x = width - 2 * metal_1_vmim_margin
+    usable_y = length - 2 * metal_1_vmim_margin
 
     # Calculate number of tiles
     n_tiles_x = max(int(math.floor((usable_x + VMIM_TILE_GAP) / tile_pitch)), 0)
@@ -89,8 +95,8 @@ def cmim(
 
     for ix in range(n_tiles_x):
         for iy in range(n_tiles_y):
-            x = metal_1_vmim_margin + METAL_1_MIM_MARGIN + ix * tile_pitch
-            y = metal_1_vmim_margin + METAL_1_MIM_MARGIN + iy * tile_pitch
+            x = METAL_1_MIM_MARGIN + metal_1_vmim_margin + ix * tile_pitch
+            y = METAL_1_MIM_MARGIN + metal_1_vmim_margin + iy * tile_pitch
             add_rect(
                 c,
                 size=(VMIM_TILE_LENGTH, VMIM_TILE_LENGTH),
@@ -98,35 +104,43 @@ def cmim(
                 origin=(x, y),
             )
 
-    # Add Metal5 port (P1)
+    # Add Metal5 port (P1) at plate center
     c.add_port(
         name="P1",
-        center=(-METAL_5_MIM_MARGIN + metal_5_length / 2.0, -METAL_5_MIM_MARGIN + metal_5_width / 2.0),
-        width=min(metal_5_length, metal_5_width),
+        center=(
+            -METAL_5_MIM_MARGIN + metal_5_size_x / 2.0,
+            -METAL_5_MIM_MARGIN + metal_5_size_y / 2.0,
+        ),
+        width=min(metal_5_size_x, metal_5_size_y),
         orientation=180,
         layer=layer_metal5,
         port_type="electrical",
     )
 
-    # Add TopMetal1 port (P2)
+    # Add TopMetal1 port (P2) at plate center
     c.add_port(
         name="P2",
-        center=(METAL_1_MIM_MARGIN + metal_1_length / 2.0, METAL_1_MIM_MARGIN + metal_1_width / 2.0),
-        width=min(metal_1_length, metal_1_width),
+        center=(
+            METAL_1_MIM_MARGIN + metal_1_size_x / 2.0,
+            METAL_1_MIM_MARGIN + metal_1_size_y / 2.0,
+        ),
+        width=min(metal_1_size_x, metal_1_size_y),
         orientation=0,
         layer=layer_topmetal1,
         port_type="electrical",
     )
 
     # Metadata
-    c.info.update({
-        "model": model,
-        "capacitance": capacitance,
-        "mim_length": length,
-        "mim_width": width,
-        "vmim_tile_length": VMIM_TILE_LENGTH,
-        "n_vmim_tiles": (n_tiles_x, n_tiles_y),
-    })
+    c.info.update(
+        {
+            "model": model,
+            "capacitance": capacitance,
+            "mim_length": length,
+            "mim_width": width,
+            "vmim_tile_length": VMIM_TILE_LENGTH,
+            "n_vmim_tiles": (n_tiles_x, n_tiles_y),
+        }
+    )
 
     return c
 
@@ -235,8 +249,9 @@ if __name__ == "__main__":
     PDK.activate()
 
     # Test the components
-    c0 = cells2.cmim()  # original
-    c1 = cmim()  # New
+    c0 = cells2.cmim(width=10, length=10)  # original
+
+    c1 = cmim(width=10, length=4)  # New
     # c = gf.grid([c0, c1], spacing=100)
     c = xor(c0, c1)
     c.show()
