@@ -190,7 +190,7 @@ def contactArray(
         Distance between first column from left edge, last column from right edge, first (bottom) row and bottom edge, and last (top) row and top edge.
 
     """
-    eps = 0.001
+    eps = tech["epsilon1"]
 
     nx = floor((length - ox * 2 + ds) / (ws + ds) + eps)
 
@@ -256,22 +256,27 @@ def rfcmim(
     c = Component()
 
     # Design rules for RF capacitor
-    via_size = 0.42  # Extracted from PDK
-    via_dist = 0.42  # Extracted from PDK
-    via_extension = 0.78  # Extracted from PDK
-    cont_size = 0.16  # Contact dimension from PDK
-    cont_dist = 0.18  # Contact spacing from PDK
+    via_size = tech["TV1_a"]
+    via_dist = tech["TV1_b"]
+    cont_size = tech["Cnt_a"]
+    cont_dist = tech["Cnt_b"]
+    tm_over = tech["TV1_d"]
 
-    mim_over = 0.6
-    via_over = 0.36  # Contact extension from PDK
+    mim_over = tech["Mim_c"]
+    via_over = tech["Mim_d"]
+
+    via_extension = via_over + tm_over
 
     psd_extra_extension = 0.03  # Additional extension for pSD layer
     pwell_extension = 3.0
     activ_external_extension = 5.6
     activ_internal_extension = 3.6
-    caspec = 1.5e-15  # Value from cni.sg13g2.json
-    cpspec = 4.0e-17  # Value from cni.sg13g2.json
-    lwd = 0.01  # um. Value from cni.sg13g2.json
+
+    # This is in mF/m^2, and we convert to F/um^2
+    caspec = float(tech["rfcmim_caspec"].rstrip("m")) * 1e-15
+    # This is in pF/m, and we convert to F/um
+    cpspec = float(tech["rfcmim_cpspec"].rstrip("p")) * 1e-18
+    lwd = float(tech["rfcmim_lwd"].rstrip("u"))
 
     layer_activ: LayerSpec = "Activdrawing"
     layer_activ_noqrc: LayerSpec = "Activnoqrc"
@@ -682,7 +687,9 @@ def rfcmim(
         ),
     )
     c.add_label(
-        f"C={round(capacitance * 1e15)}f", layer=layer_text, position=(length / 2, -2.0)
+        f"C={round(capacitance * 1e15, 1)}f",
+        layer=layer_text,
+        position=(length / 2, -2.0),
     )
 
     # Add metadata
@@ -704,20 +711,14 @@ if __name__ == "__main__":
     PDK.activate()
 
     # Test the components
-    width = 9.5
-    length = 8
-    c0 = cells2.cmim(width=width, length=length)  # original
-    c1 = cmim(width=width, length=length)  # New
+    width = 6.99
+    length = 6.99
+    # c0 = cells2.cmim(width=width, length=length)  # original
+    # c1 = cmim(width=width, length=length)  # New
+    # c_cmim = xor(c0, c1)
+    # c_cmim.show()
 
-    print(c0.ports)
-
-    print(c1.ports)
-
-    c_cmim = xor(c0, c1)
-    c_cmim.draw_ports()
-    c_cmim.show()
-
-    # c0_rf = cells2.rfcmim(width=width, length=length)  # original
-    # c1_rf = rfcmim(width=width, length=length)  # New
-    # c_rfcmim = xor(c0_rf, c1_rf)
-    # c_rfcmim.show()
+    c0_rf = cells2.rfcmim(width=width, length=length)  # original
+    c1_rf = rfcmim(width=width, length=length)  # New
+    c_rfcmim = xor(c0_rf, c1_rf)
+    c_rfcmim.show()
