@@ -1,699 +1,721 @@
 """Capacitor components for IHP PDK."""
 
+import math
 from math import floor
 
 import gdsfactory as gf
 from gdsfactory import Component
-from gdsfactory.typings import LayerSpec
+from gdsfactory.typings import LayerSpec, LayerSpecs
 
-from cni.tech import Tech
+Rect = tuple[float, float, float, float]
 
-tech_name = "SG13_dev"
-tech = Tech.get("SG13_dev").getTechParams()
+
+# Logic taken from original IHP rfcmim contact array
+def add_contact_array(
+    c,
+    x_min: float,
+    y_min: float,
+    x_max: float,
+    y_max: float,
+    x_offset: float,
+    y_offset: float,
+    contact_size: float,
+    contact_gap: float,
+    layer_cont: LayerSpec = "Contdrawing",
+    *,
+    eps: float = 1e-9,
+) -> list[Rect]:
+    placed: list[Rect] = []
+
+    width = x_max - x_min
+    height = y_max - y_min
+
+    if width <= 0 or height <= 0:
+        return placed
+
+    pitch_x = contact_size + contact_gap
+    pitch_y = contact_size + contact_gap
+
+    # how many columns fit (nx)
+    nx = int(floor((width - 2 * x_offset + contact_gap) / pitch_x + eps))
+    if nx <= 0:
+        return placed
+
+    # extra spacing between columns when more than one column fits
+    if nx == 1:
+        extra_space_x = 0.0
+    else:
+        extra_space_x = (width - 2 * x_offset - contact_size * nx) / (nx - 1)
+
+    # how many rows fit (ny)
+    ny = int(floor((height - 2 * y_offset + contact_gap) / pitch_y + eps))
+    if ny <= 0:
+        return placed
+
+    # extra spacing between rows when more than one row fits
+    if ny == 1:
+        extra_space_y = 0.0
+    else:
+        extra_space_y = (height - 2 * y_offset - contact_size * ny) / (ny - 1)
+
+    # initial x position *relative* to x_min
+    if nx == 1:
+        rel_x = (width - contact_size) / 2.0
+    else:
+        rel_x = x_offset
+
+    # place columns
+    for _col in range(nx):
+        # initial y position *relative* to y_min for each column
+        if ny == 1:
+            rel_y = (height - contact_size) / 2.0
+        else:
+            rel_y = y_offset
+
+        for _row in range(ny):
+            x0 = x_min + rel_x
+            y0 = y_min + rel_y
+            x1 = x0 + contact_size
+            y1 = y0 + contact_size
+
+            # safety: ensure the contact fully fits into the box (mirror reference strictness)
+            if (
+                x1 <= x_max + eps
+                and y1 <= y_max + eps
+                and x0 + eps >= x_min
+                and y0 + eps >= y_min
+            ):
+                add_rect(
+                    c,
+                    size=(contact_size, contact_size),
+                    layer=layer_cont,
+                    origin=(x0, y0),
+                )
+                placed.append((x0, y0, x1, y1))
+
+            # step to next row
+            rel_y += contact_size + extra_space_y
+
+        # step to next column
+        rel_x += contact_size + extra_space_x
+
+    return placed
+
+
+def add_rect(
+    component,
+    size: tuple[float, float],
+    layer: LayerSpec,
+    origin: tuple[float, float],
+    centered: bool = False,
+):
+    """Create rectangle, add ref to component and move to origin, return ref."""
+    rect = gf.components.rectangle(size=size, layer=layer, centered=centered)
+    ref = component.add_ref(rect)
+    ref.move(origin)
+    return ref
+
+
+def place_vmim_grid(
+    component,
+    width: float,
+    length: float,
+    VMIM_EDGE_CLEARANCE: float = 0.34,
+    VMIM_TILE_GAP: float = 0.84,
+    VMIM_TILE_LENGTH: float = 0.42,
+    GRID_STEP: float = 0.005,
+    layer_vmim: LayerSpec = "Vmimdrawing",
+):
+    # Calculate how many tiles fit in X and Y
+    tile_pitch = VMIM_TILE_GAP + VMIM_TILE_LENGTH
+    n_tiles_x = int(
+        max(
+            math.floor(
+                (width - 2 * VMIM_EDGE_CLEARANCE + VMIM_TILE_GAP) / (tile_pitch)
+            ),
+            0,
+        )
+    )
+    n_tiles_y = int(
+        max(
+            math.floor(
+                (length - 2 * VMIM_EDGE_CLEARANCE + VMIM_TILE_GAP) / (tile_pitch)
+            ),
+            0,
+        )
+    )
+
+    # Compute occupied size of the tile array (including gaps and the edge overlaps)
+    occupied_x = (
+        (n_tiles_x * (tile_pitch) - VMIM_TILE_GAP) + 2 * VMIM_EDGE_CLEARANCE
+        if n_tiles_x > 0
+        else 0.0
+    )
+    occupied_y = (
+        (n_tiles_y * (tile_pitch) - VMIM_TILE_GAP) + 2 * VMIM_EDGE_CLEARANCE
+        if n_tiles_y > 0
+        else 0.0
+    )
+
+    # Offsets to center tile array inside the MIM plate, snapped to grid
+    x_offset = round(((width - occupied_x) / 2.0) / GRID_STEP) * GRID_STEP - 0.005
+    y_offset = round(((length - occupied_y) / 2.0) / GRID_STEP) * GRID_STEP - 0.005
+
+    x_start = VMIM_EDGE_CLEARANCE + x_offset
+    y_start = VMIM_EDGE_CLEARANCE + y_offset
+
+    # Draw Vmim grid
+    for y_iter in range(n_tiles_y):
+        y_current = y_start + y_iter * tile_pitch
+        x_current = x_start
+        for _x_iter in range(n_tiles_x):
+            add_rect(
+                component,
+                size=(VMIM_TILE_LENGTH, VMIM_TILE_LENGTH),
+                layer=layer_vmim,
+                origin=(x_current, y_current),
+            )
+            x_current = x_current + tile_pitch
+
+    return x_start, y_start, n_tiles_x, n_tiles_y
+
+
+def add_margin_ring(
+    c,
+    width: float,
+    length: float,
+    outer_margin: float,
+    inner_margin: float,
+    layer,
+    metal_1_pad_length,
+    cutout: bool = False,
+):
+    outer_x0 = -outer_margin
+    outer_y0 = -outer_margin
+    outer_x1 = width + outer_margin
+    outer_y1 = length + outer_margin
+
+    inner_x0 = -inner_margin
+    inner_y0 = -inner_margin
+    inner_x1 = width + inner_margin
+    inner_y1 = length + inner_margin
+
+    # top
+    add_rect(
+        c,
+        size=(outer_x1 - outer_x0, outer_y1 - inner_y1),
+        layer=layer,
+        origin=(outer_x0, inner_y1),
+    )
+
+    # bottom
+    add_rect(
+        c,
+        size=(outer_x1 - outer_x0, inner_y0 - outer_y0),
+        layer=layer,
+        origin=(outer_x0, outer_y0),
+    )
+
+    # left
+    add_rect(
+        c,
+        size=(inner_x0 - outer_x0, inner_y1 - inner_y0),
+        layer=layer,
+        origin=(outer_x0, inner_y0),
+    )
+
+    # right
+    if not cutout:
+        add_rect(
+            c,
+            size=(outer_x1 - inner_x1, inner_y1 - inner_y0),
+            layer=layer,
+            origin=(inner_x1, inner_y0),
+        )
+    else:
+        # lower right segment
+        lower_h = (length - metal_1_pad_length) / 2.0 - inner_y0
+        if lower_h > 0:
+            add_rect(
+                c,
+                size=(outer_x1 - inner_x1, lower_h),
+                layer=layer,
+                origin=(inner_x1, inner_y0),
+            )
+
+        # upper right segment
+        upper_h = inner_y1 - ((length + metal_1_pad_length) / 2.0)
+        if upper_h > 0:
+            add_rect(
+                c,
+                size=(outer_x1 - inner_x1, upper_h),
+                layer=layer,
+                origin=(inner_x1, (length + metal_1_pad_length) / 2.0),
+            )
 
 
 @gf.cell
 def cmim(
     width: float = 6.99,
     length: float = 6.99,
+    capacitance: float | None = None,
+    model: str = "cmim",
+    layer_metal5: LayerSpec = "Metal5drawing",
+    layer_mim: LayerSpec = "MIMdrawing",
+    layer_topmetal1: LayerSpec = "TopMetal1drawing",
+    layer_vmim: LayerSpec = "Vmimdrawing",
 ) -> Component:
-    """Create a MIM (Metal-Insulator-Metal) capacitor.
+    """Create an MIM (Metal-Insulator-Metal) capacitor.
 
     Args:
-        width: Width of the capacitor in micrometers.
-        length: Length of the capacitor in micrometers.
+        width: MIM plate X-size (um). Scales the MIM/top-plate in X.
+        length: MIM plate Y-size (um). Scales the MIM/top-plate in Y.
+        capacitance: Optional (kept for compatibility; not used for geometry).
+        model: Device model name stored in metadata.
+        layer_metal5: Metal5 drawing layer.
+        layer_mim: MIM dielectric layer.
+        layer_topmetal1: TopMetal1 drawing layer.
+        layer_vmim: Vmimdrawing (small tile) layer.
 
     Returns:
-        Component with MIM capacitor layout.
+        MIM capacitor component.
     """
     c = Component()
 
-    # Design rules
-    epsilon = tech["epsilon1"]
-    cont_size = tech["TV1_a"]
-    cont_over = tech["Mim_d"]
-    cont_dist = 0.84  # hardcoded in IHP PDK
-    cap_density = 1.5
+    # Geometrical constants
+    METAL_5_MIM_MARGIN = 0.6
+    VMIM_EDGE_CLEARANCE = 0.34
+    VMIM_TILE_LENGTH = 0.42
+    VMIM_TILE_GAP = 0.84
+    GRID_STEP = 0.005
 
-    # Layers
-    layer_metal5: LayerSpec = "Metal5drawing"
-    layer_mim: LayerSpec = "MIMdrawing"
-    layer_via_mim: LayerSpec = "Vmimdrawing"
-    layer_topmetal1: LayerSpec = "TopMetal1drawing"
+    tile_pitch = VMIM_TILE_LENGTH + VMIM_TILE_GAP
 
-    # how many vias?
-    xanz = (width - cont_over - cont_over + cont_dist) // (
-        cont_size + cont_dist
-    ) + epsilon
-    # width for vias
-    w1 = xanz * (cont_size + cont_dist) - cont_dist + cont_over + cont_over
-    # offset to first via
-    xoffset = tog((width - w1) / 2)
-
-    yanz = (length - cont_over - cont_over + cont_dist) // (
-        cont_size + cont_dist
-    ) + epsilon
-    l1 = yanz * (cont_size + cont_dist) - cont_dist + cont_over + cont_over
-    yoffset = tog((length - l1) / 2)
-
-    ycont_cnt = cont_over + yoffset
-    # draw vias
-    while ycont_cnt + cont_size + cont_over <= length + epsilon:
-        xcont_cnt = cont_over + xoffset
-        while xcont_cnt + cont_size + cont_over <= width + epsilon:
-            c.add_ref(
-                gf.components.rectangle(
-                    size=(cont_size, cont_size),
-                    layer=layer_via_mim,
-                )
-            ).move((xcont_cnt, ycont_cnt))
-
-            xcont_cnt = xcont_cnt + cont_size + cont_dist
-
-        ycont_cnt = ycont_cnt + cont_size + cont_dist
-
-    # TopMetal1
-    xcont_cnt = xcont_cnt + tech["TV1_d"] - cont_dist
-    ycont_cnt = ycont_cnt + tech["TV1_d"] - cont_dist
-
-    # MIM dielectric layer
-    c.add_ref(
-        gf.components.rectangle(
-            size=(width, length),
-            layer=layer_mim,
-        )
-    )
-
-    x1 = tech["Mim_d"] - tech["TV1_d"] + xoffset
-    x2 = xcont_cnt
-    y1 = tech["Mim_d"] - tech["TV1_d"] + yoffset
-    y2 = ycont_cnt
-
-    # Top plate (Metal5)
-    c.add_ref(
-        gf.components.rectangle(
-            size=(x2 - x1, y2 - y1),
-            layer=layer_topmetal1,
-        )
-    ).move((x1, y1))
+    # Grid snapping
+    length = round(length / GRID_STEP) * GRID_STEP
+    width = round(width / GRID_STEP) * GRID_STEP
 
     # Calculate capacitance
-    capacitance = width * length * cap_density
+    if capacitance is None:
+        CAP_DENSITY = 1.54
+        area = width * length
+        capacitance = area * CAP_DENSITY
 
-    c.add_ref(
-        gf.components.rectangle(
-            size=(width + 2 * tech["Mim_c"], length + 2 * tech["Mim_c"]),
-            layer=layer_metal5,
-        )
-    ).move((-tech["Mim_c"], -tech["Mim_c"]))
+    # Draw MIM layer
+    add_rect(c, size=(width, length), layer=layer_mim, origin=(0.0, 0.0))
 
-    # Add ports
-    c.add_port(
-        name="B",
-        center=(width / 2, length / 2),
-        width=min(
-            width + 2 * tech["Mim_c"], length + 2 * tech["Mim_c"]
-        ),  # because ports_on_short_side is True
-        orientation=0,
+    # Draw Metal5 bottom plate (bigger by METAL_5_MIM_MARGIN)
+    metal_5_size_x = width + 2 * METAL_5_MIM_MARGIN
+    metal_5_size_y = length + 2 * METAL_5_MIM_MARGIN
+    add_rect(
+        c,
+        size=(metal_5_size_x, metal_5_size_y),
         layer=layer_metal5,
-        port_type="electrical",
+        origin=(-METAL_5_MIM_MARGIN, -METAL_5_MIM_MARGIN),
     )
 
+    # Draw Vmim layer
+    x_start, y_start, n_tiles_x, n_tiles_y = place_vmim_grid(
+        c,
+        width,
+        length,
+        VMIM_EDGE_CLEARANCE,
+        VMIM_TILE_GAP,
+        VMIM_TILE_LENGTH,
+        GRID_STEP,
+        layer_vmim,
+    )
+
+    # Derive coordinates of top right corner
+    metal_1_x2 = (
+        x_start + (n_tiles_x - 1) * tile_pitch + VMIM_TILE_LENGTH + VMIM_TILE_GAP / 2.0
+    )
+    metal_1_y2 = (
+        y_start + (n_tiles_y - 1) * tile_pitch + VMIM_TILE_LENGTH + VMIM_TILE_GAP / 2.0
+    )
+
+    # Derive coordinates of left bottom right corner
+    metal_1_x1 = x_start - VMIM_TILE_GAP / 2.0
+    metal_1_y1 = y_start - VMIM_TILE_GAP / 2.0
+
+    # Draw TopMetal1 covering the tile-array area
+    add_rect(
+        c,
+        size=(metal_1_x2 - metal_1_x1, metal_1_y2 - metal_1_y1),
+        layer=layer_topmetal1,
+        origin=(metal_1_x1, metal_1_y1),
+    )
+
+    # Add ports
+    plus_center = ((metal_1_x1 + metal_1_x2) / 2.0, (metal_1_y1 + metal_1_y2) / 2.0)
     c.add_port(
-        name="T",
-        center=((x2 + x1) / 2, (y2 + y1) / 2),
-        width=min(x2 - x1, y2 - y1),  # because ports_on_short_side is True
-        orientation=180,
+        name="PLUS",
+        center=plus_center,
+        width=min(metal_1_x2 - metal_1_x1, metal_1_y2 - metal_1_y1),
+        orientation=0,
         layer=layer_topmetal1,
         port_type="electrical",
     )
 
-    # Add metadata
-    c.info["model"] = "cmim"
-    c.info["width"] = width
-    c.info["length"] = length
-    c.info["capacitance_fF"] = capacitance
-    c.info["area_um2"] = width * length
+    minus_center = (
+        -METAL_5_MIM_MARGIN + metal_5_size_x / 2.0,
+        -METAL_5_MIM_MARGIN + metal_5_size_y / 2.0,
+    )
+    c.add_port(
+        name="MINUS",
+        center=minus_center,
+        width=min(metal_5_size_x, metal_5_size_y),
+        orientation=180,
+        layer=layer_metal5,
+        port_type="electrical",
+    )
+
+    # Metadata
+    c.info.update(
+        {
+            "model": model,
+            "capacitance": capacitance,
+            "mim_length": length,
+            "mim_width": width,
+            "vmim_tile_length": VMIM_TILE_LENGTH,
+            "n_vmim_tiles": (n_tiles_x, n_tiles_y),
+        }
+    )
 
     return c
 
 
-def fix(value):
-    if type(value) is float:
-        return int(floor(value))
-    else:
-        return value
-
-
-def tog(x: float) -> float:
-    SG13_GRID = 0.005
-    SG13_EPSILON = 0.001
-    SG13_IGRID = 1.0 / SG13_GRID
-    return fix(x * SG13_IGRID + SG13_EPSILON) * SG13_GRID
-
-
-def contactArray(
-    c: gf.Component,
-    length: float,
-    width: float,
-    contactLayer: LayerSpec,
-    xl: float,
-    yl: float,
-    ox: float,
-    oy: float,
-    ws: float,
-    ds: float,
-) -> None:
-    """
-    Distributes as many square contact of size ws, into a rectangle of (length, width), with distances >= ds.
-    The distances are adjusted so that the outer contacts have fixed distances ox and oy from the sides of the rectangle.
-
-    Parameters
-    ----------
-    c : gf.Component
-        The GDSFactory component on which the array is placed.
-    length : float
-        Length (x-dimension) of the region which contains the pin array.
-    width : float
-        Width (y-dimension) of the region which contains the pin array.
-    xl: float
-        Minimum x-coordinate of the array that contains the pins.
-    yl: float
-        Minimum y-coordinate of the array that contains the pins.
-    ox: float
-        Distance from edge in x direction.
-    oy: float
-        Distance from edge in y direction.
-    ws : float
-        Dimension, x and y, of the individual square contact.
-    ds: float
-        Distance between first column from left edge, last column from right edge, first (bottom) row and bottom edge, and last (top) row and top edge.
-
-    """
-    eps = tech["epsilon1"]
-
-    nx = floor((length - ox * 2 + ds) / (ws + ds) + eps)
-
-    dsx = 0
-    if nx == 1:
-        dsx = 0
-    else:
-        dsx = (length - ox * 2 - ws * nx) / (nx - 1)
-
-    ny = floor((width - oy * 2 + ds) / (ws + ds) + eps)
-
-    dsy = 0
-    if ny == 1:
-        dsy = 0
-    else:
-        dsy = (width - oy * 2 - ws * ny) / (ny - 1)
-
-    x = 0
-    if nx == 1:
-        x = (length - ws) / 2
-    else:
-        x = ox
-
-    for _ in range(int(nx)):
-        # for(i=1; i<=nx; i++) {
-        y = 0
-        if ny == 1:
-            y = (width - ws) / 2
-        else:
-            y = oy
-
-        for _ in range(int(ny)):
-            # for(j=1; j<=ny; j++) {
-            contact_ref = c << gf.components.rectangle(
-                size=(ws, ws),
-                layer=contactLayer,
-            )
-            contact_ref.move((tog(x) + xl, tog(y) + yl))
-
-            y = y + ws + dsy
-
-        x = x + ws + dsx
-
-
 @gf.cell
 def rfcmim(
-    width: float = 6.99,
-    length: float = 6.99,
+    width: float = 7.0,
+    length: float = 7.0,
     capacitance: float | None = None,
-    feed_width: float = 3,
+    model: str = "rfcmim",
+    layer_activ: LayerSpec = "Activdrawing",
+    layer_mim: LayerSpec = "MIMdrawing",
+    layer_metal1: LayerSpec = "Metal1drawing",
+    layer_metal1_pin: LayerSpec = "Metal1pin",
+    layer_metal5: LayerSpec = "Metal5drawing",
+    layer_metal5_pin: LayerSpec = "Metal5pin",
+    layer_topmetal1: LayerSpec = "TopMetal1drawing",
+    layer_topmetal1_pin: LayerSpec = "TopMetal1pin",
+    layer_vmim: LayerSpec = "Vmimdrawing",
+    layer_cont: LayerSpec = "Contdrawing",
+    layer_psd: LayerSpec = "pSDdrawing",
+    layer_pwellblock: LayerSpec = "PWellblock",
+    layers_no_qrc: LayerSpecs = (
+        "Activnoqrc",
+        "TopMetal1noqrc",
+        "Metal1noqrc",
+        "Metal2noqrc",
+        "Metal3noqrc",
+        "Metal4noqrc",
+        "Metal5noqrc",
+    ),
 ) -> Component:
-    """Create an RF MIM capacitor with optimized layout.
+    """
+    Create an RF MIM capacitor (empty scaffold).
 
     Args:
-        width: Width of the capacitor in micrometers.
-        length: Length of the capacitor in micrometers.
+        width: Capacitor width (dx) in micrometers.
+        length: Capacitor length (dy) in micrometers.
         capacitance: Target capacitance in fF (optional).
-        feed_width: Width of the port for both plates of the capacitor.
+        model: Model name for metadata.
+        layer_activ: Active diffusion drawing layer.
+        layer_mim: MIM dielectric layer.
+        layer_metal1: Metal1 drawing layer.
+        layer_metal1_pin: Metal1 pin layer.
+        layer_metal5: Metal5 drawing layer.
+        layer_metal5_pin: Metal5 pin layer.
+        layer_topmetal1: TopMetal1 drawing layer.
+        layer_topmetal1_pin: TopMetal1 pin layer.
+        layer_vmim: Vmim tile layer.
+        layer_cont: Contact drawing layer.
+        layer_psd: P-sub diffusion drawing layer.
+        layer_pwellblock: P-well block mask.
+        layers_no_qrc: No quantitative RC extraction layers
 
     Returns:
-        Component with RF MIM capacitor layout.
+        Model of RF MIM capacitor
     """
     c = Component()
 
-    # Design rules for RF capacitor
-    via_size = tech["TV1_a"]
-    via_dist = tech["TV1_b"]
-    cont_size = tech["Cnt_a"]
-    cont_dist = tech["Cnt_b"]
-    tm_over = tech["TV1_d"]
+    # Geometrical constants
+    MIM_METAL_5_MARGIN = 0.6
+    MIM_METAL_1_MARGIN = 0.36
+    MIM_PWELL_MARGIN = 3
+    NO_QRC_PWELL_MARGIN = 2.6
+    METAL_1_PAD_LENGTH = 3.0
 
-    mim_over = tech["Mim_c"]
-    via_over = tech["Mim_d"]
+    ACTIV_INNER_MARGIN = 3.6
+    ACTIV_OUTER_MARGIN = 5.6
+    PSD_INNER_MARGIN = 3.57
+    PSD_OUTER_MARGIN = 5.63
+    RING_INNER_MARGIN = 3.6
+    RING_OUTER_MARGIN = 5.6
 
-    via_extension = via_over + tm_over
+    CONTACT_SIZE = 0.16
+    CONTACT_GAP = 0.18
+    CONTACT_OFFSET_X = 0.36
+    CONTACT_OFFSET_Y = 0.36
 
-    psd_extra_extension = 0.03  # Additional extension for pSD layer
-    pwell_extension = 3.0
-    activ_external_extension = 5.6
-    activ_internal_extension = 3.6
+    VMIM_TILE_LENGTH = 0.42
+    VMIM_EDGE_CLEARANCE = 0.78
+    VMIM_TILE_GAP = 0.58
 
-    # This is in mF/m^2, and we convert to F/um^2
-    caspec = float(tech["rfcmim_caspec"].rstrip("m")) * 1e-15
-    # This is in pF/m, and we convert to F/um
-    cpspec = float(tech["rfcmim_cpspec"].rstrip("p")) * 1e-18
-    lwd = float(tech["rfcmim_lwd"].rstrip("u"))
+    # Grid snapping
+    GRID_STEP = 0.005
+    width = round(width / GRID_STEP) * GRID_STEP
+    length = round(length / GRID_STEP) * GRID_STEP
 
-    layer_activ: LayerSpec = "Activdrawing"
-    layer_activ_noqrc: LayerSpec = "Activnoqrc"
-    layer_cont: LayerSpec = "Contdrawing"
-    layer_metal1: LayerSpec = "Metal1drawing"
-    layer_metal1_noqrc: LayerSpec = "Metal1noqrc"
-    layer_metal1_pin: LayerSpec = "Metal1pin"
-    layer_metal2_noqrc: LayerSpec = "Metal2noqrc"
-    layer_psd: LayerSpec = "pSDdrawing"
-    layer_metal3_noqrc: LayerSpec = "Metal3noqrc"
-    layer_mim: LayerSpec = "MIMdrawing"
-    layer_pwellblock: LayerSpec = "PWellblock"
-    layer_metal4_noqrc: LayerSpec = "Metal4noqrc"
-    layer_text: LayerSpec = "TEXTdrawing"
-    layer_metal5: LayerSpec = "Metal5drawing"
-    layer_metal5_noqrc: LayerSpec = "Metal5noqrc"
-    layer_metal5_pin: LayerSpec = "Metal5pin"
-    layer_topmetal1: LayerSpec = "TopMetal1drawing"
-    layer_topmetal1_noqrc: LayerSpec = "TopMetal1noqrc"
-    layer_topmetal1_pin: LayerSpec = "TopMetal1pin"
-    layer_via_mim: LayerSpec = "Vmimdrawing"
+    # Calculate capacitance
+    if capacitance is None:
+        CAP_DENSITY = 1.54
+        area = length * width
+        capacitance = area * CAP_DENSITY
 
-    # Grid snap
-    grid = 0.005
-    width = round(width / grid) * grid
-    length = round(length / grid) * grid
+    # MIM layer
+    add_rect(c, (width, length), layer_mim, origin=(0, 0))
 
-    # Capacitance Calculation
-    leff = length + lwd
-    weff = width + lwd
-    capacitance = leff * weff * caspec + 2.0 * (leff + weff) * cpspec
+    # PWell block layer
+    p_well_width = 2 * MIM_PWELL_MARGIN + width
+    p_well_length = 2 * MIM_PWELL_MARGIN + length
+    p_well_corner = (-MIM_PWELL_MARGIN, -MIM_PWELL_MARGIN)
+    add_rect(c, (p_well_width, p_well_length), layer_pwellblock, origin=p_well_corner)
 
-    # The top plate is an extension of the via array, so we create it after the vias.
-    # First, the number of vias needs to be defined. They are squares of via_dim, and spacing via_spacing.
-    # Let's assume we have a grid of n_x by n_y vias. The top plate will extend this array by via_extension on each side.
-    # So the length of the top plate will be:
-    # L_top = n_x*via_dim + (n_x-1)*via_spacing + 2*via_extension = 3*n_x*via_dim, for spacing = 2*via_dim and extension = via_dim.
-    # The PDK gives the maximum vias for which the top plate dimensions do not exceed the insulator dimensions by more than 0.115um.
+    # No QRC layers
+    no_qrc_width = 2 * (MIM_PWELL_MARGIN + NO_QRC_PWELL_MARGIN) + width
+    no_qrc_length = 2 * (MIM_PWELL_MARGIN + NO_QRC_PWELL_MARGIN) + length
+    no_qrc_corner = (
+        -MIM_PWELL_MARGIN - NO_QRC_PWELL_MARGIN,
+        -MIM_PWELL_MARGIN - NO_QRC_PWELL_MARGIN,
+    )
+    for layer in layers_no_qrc:
+        add_rect(c, (no_qrc_width, no_qrc_length), layer, origin=no_qrc_corner)
 
-    # 1 Vias
-    contactArray(
-        c=c,
-        length=length,
-        width=width,
-        contactLayer=layer_via_mim,
-        xl=0,
-        yl=0,
-        ox=via_extension,
-        oy=via_extension,
-        ws=via_size,
-        ds=via_dist,
+    # Metal5 layer
+    metal_5_width = 2 * MIM_METAL_5_MARGIN + width
+    metal_5_length = 2 * MIM_METAL_5_MARGIN + length
+    metal_5_corner = (-MIM_METAL_5_MARGIN, -MIM_METAL_5_MARGIN)
+    add_rect(c, (metal_5_width, metal_5_length), layer_metal5, origin=metal_5_corner)
+
+    metal5_feed_origin = (
+        width + MIM_METAL_5_MARGIN,
+        (length - METAL_1_PAD_LENGTH) / 2.0,
+    )
+    metal5_feed_size = (RING_OUTER_MARGIN - MIM_METAL_5_MARGIN, METAL_1_PAD_LENGTH)
+    add_rect(c, size=metal5_feed_size, layer=layer_metal5, origin=metal5_feed_origin)
+
+    # Vmim layer
+    add_contact_array(
+        c,
+        x_min=0.0,
+        y_min=0.0,
+        x_max=width,
+        y_max=length,
+        x_offset=VMIM_EDGE_CLEARANCE,
+        y_offset=VMIM_EDGE_CLEARANCE,
+        contact_size=VMIM_TILE_LENGTH,
+        contact_gap=VMIM_TILE_GAP,
+        layer_cont=layer_vmim,
     )
 
-    # 2 MIM dielectric layer
-    c.add_ref(
-        gf.components.rectangle(
-            size=(length, width),
-            layer=layer_mim,
-        )
+    # place_vmim_grid(c, width, length, VMIM_EDGE_CLEARANCE, VMIM_TILE_GAP, VMIM_TILE_LENGTH, GRID_STEP, layer_vmim)
+
+    # Top Metal1 layer
+    metal_1_width = width - 2 * MIM_METAL_1_MARGIN
+    metal_1_length = length - 2 * MIM_METAL_1_MARGIN
+    metal_1_corner = (MIM_METAL_1_MARGIN, MIM_METAL_1_MARGIN)
+    metal_1_pad_width = MIM_PWELL_MARGIN + NO_QRC_PWELL_MARGIN + MIM_METAL_1_MARGIN
+    metal_1_pad_corner = (
+        -MIM_PWELL_MARGIN - NO_QRC_PWELL_MARGIN,
+        (length - METAL_1_PAD_LENGTH) / 2,
     )
-    # 3 TopMetal1 internal
-    top_metal1_internal = c << gf.components.rectangle(
-        size=(length - 2 * via_over, width - 2 * via_over),
+
+    add_rect(
+        c,
+        size=(metal_1_width, metal_1_length),
         layer=layer_topmetal1,
+        origin=metal_1_corner,
     )
-    top_metal1_internal.xmin = via_over
-    top_metal1_internal.ymin = via_over
-
-    # 4 Metal5 internal
-    metal5_internal = c << gf.components.rectangle(
-        size=(length + 2 * mim_over, width + 2 * mim_over),
-        layer=layer_metal5,
-    )
-    metal5_internal.xmin = -mim_over
-    metal5_internal.ymin = -mim_over
-
-    # 5 PWellblock
-    pwell = c << gf.components.rectangle(
-        size=(length + 2 * pwell_extension, width + 2 * pwell_extension),
-        layer=layer_pwellblock,
-    )
-    pwell.xmin = -pwell_extension
-    pwell.ymin = -pwell_extension
-
-    # 6 More TopMetal1
-    top_metal1_line = c << gf.components.rectangle(
-        size=(activ_external_extension + via_over, feed_width),
+    add_rect(
+        c,
+        size=(metal_1_pad_width, METAL_1_PAD_LENGTH),
         layer=layer_topmetal1,
-    )
-    top_metal1_line.xmin = -activ_external_extension
-    top_metal1_line.ymin = width / 2 - feed_width / 2
-
-    top_metal1_pin = c << gf.components.rectangle(
-        size=(activ_external_extension - activ_internal_extension, feed_width),
-        layer=layer_topmetal1_pin,
-    )
-    top_metal1_pin.xmin = -activ_external_extension
-    top_metal1_pin.ymin = width / 2 - feed_width / 2
-
-    # Noqrc layers
-    activ_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_activ_noqrc,
-    )
-    activ_noqrc.xmin = -activ_external_extension
-    activ_noqrc.ymin = -activ_external_extension
-
-    metal1_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_metal1_noqrc,
-    )
-    metal1_noqrc.xmin = -activ_external_extension
-    metal1_noqrc.ymin = -activ_external_extension
-
-    metal2_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_metal2_noqrc,
-    )
-    metal2_noqrc.xmin = -activ_external_extension
-    metal2_noqrc.ymin = -activ_external_extension
-
-    metal3_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_metal3_noqrc,
-    )
-    metal3_noqrc.xmin = -activ_external_extension
-    metal3_noqrc.ymin = -activ_external_extension
-
-    metal4_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_metal4_noqrc,
-    )
-    metal4_noqrc.xmin = -activ_external_extension
-    metal4_noqrc.ymin = -activ_external_extension
-
-    metal5_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_metal5_noqrc,
-    )
-    metal5_noqrc.xmin = -activ_external_extension
-    metal5_noqrc.ymin = -activ_external_extension
-
-    top_metal1_noqrc = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            width + 2 * activ_external_extension,
-        ),
-        layer=layer_topmetal1_noqrc,
-    )
-    top_metal1_noqrc.xmin = -activ_external_extension
-    top_metal1_noqrc.ymin = -activ_external_extension
-
-    c.add_polygon(
-        [
-            (-activ_internal_extension, -activ_internal_extension),
-            (-activ_internal_extension, width + activ_internal_extension),
-            (length + activ_internal_extension, width + activ_internal_extension),
-            (length + activ_internal_extension, width / 2 + feed_width / 2),
-            (length + activ_external_extension, width / 2 + feed_width / 2),
-            (length + activ_external_extension, width + activ_external_extension),
-            (-activ_external_extension, width + activ_external_extension),
-            (-activ_external_extension, -activ_external_extension),
-            (length + activ_external_extension, -activ_external_extension),
-            (length + activ_external_extension, width / 2 - feed_width / 2),
-            (length + activ_internal_extension, width / 2 - feed_width / 2),
-            (length + activ_internal_extension, -activ_internal_extension),
-        ],
-        layer=layer_activ,
+        origin=metal_1_pad_corner,
     )
 
-    metal5_pin = c << gf.components.rectangle(
-        size=(activ_external_extension - activ_internal_extension, feed_width),
-        layer=layer_metal5_pin,
-    )
-    metal5_pin.xmin = length + activ_internal_extension
-    metal5_pin.ymin = width / 2 - feed_width / 2
-
-    c.add_polygon(
-        [
-            (
-                -activ_external_extension - psd_extra_extension,
-                width + activ_internal_extension - psd_extra_extension,
-            ),
-            (
-                -activ_external_extension - psd_extra_extension,
-                -activ_external_extension - psd_extra_extension,
-            ),
-            (
-                length + activ_external_extension + psd_extra_extension,
-                -activ_external_extension - psd_extra_extension,
-            ),
-            (
-                length + activ_external_extension + psd_extra_extension,
-                width + activ_external_extension + psd_extra_extension,
-            ),
-            (
-                -activ_external_extension - psd_extra_extension,
-                width + activ_external_extension + psd_extra_extension,
-            ),
-            (
-                -activ_external_extension - psd_extra_extension,
-                width + activ_internal_extension - psd_extra_extension,
-            ),
-            (
-                length + activ_internal_extension - psd_extra_extension,
-                width + activ_internal_extension - psd_extra_extension,
-            ),
-            (
-                length + activ_internal_extension - psd_extra_extension,
-                -activ_internal_extension + psd_extra_extension,
-            ),
-            (
-                -activ_internal_extension + psd_extra_extension,
-                -activ_internal_extension + psd_extra_extension,
-            ),
-            (
-                -activ_internal_extension + psd_extra_extension,
-                width + activ_internal_extension - psd_extra_extension,
-            ),
-        ],
+    # Psd and activ layers
+    add_margin_ring(
+        c,
+        width,
+        length,
+        outer_margin=PSD_OUTER_MARGIN,
+        inner_margin=PSD_INNER_MARGIN,
         layer=layer_psd,
+        metal_1_pad_length=METAL_1_PAD_LENGTH,
+        cutout=False,
     )
 
-    c.add_polygon(
-        [
-            (-activ_internal_extension, -activ_internal_extension),
-            (-activ_internal_extension, width + activ_internal_extension),
-            (length + activ_internal_extension, width + activ_internal_extension),
-            (length + activ_internal_extension, width / 2 + feed_width / 2),
-            (length + activ_external_extension, width / 2 + feed_width / 2),
-            (length + activ_external_extension, width + activ_external_extension),
-            (-activ_external_extension, width + activ_external_extension),
-            (-activ_external_extension, -activ_external_extension),
-            (length + activ_external_extension, -activ_external_extension),
-            (length + activ_external_extension, width / 2 - feed_width / 2),
-            (length + activ_internal_extension, width / 2 - feed_width / 2),
-            (length + activ_internal_extension, -activ_internal_extension),
-        ],
+    add_margin_ring(
+        c,
+        width,
+        length,
+        outer_margin=ACTIV_OUTER_MARGIN,
+        inner_margin=ACTIV_INNER_MARGIN,
+        layer=layer_activ,
+        metal_1_pad_length=METAL_1_PAD_LENGTH,
+        cutout=True,
+    )
+
+    # Metal1 layer
+    add_margin_ring(
+        c,
+        width,
+        length,
+        outer_margin=RING_OUTER_MARGIN,
+        inner_margin=RING_INNER_MARGIN,
         layer=layer_metal1,
+        metal_1_pad_length=METAL_1_PAD_LENGTH,
+        cutout=True,
     )
 
-    # Top extension
-    contactArray(
-        c=c,
-        length=length + 2 * activ_external_extension,
-        width=activ_external_extension - activ_internal_extension,
-        contactLayer=layer_cont,
-        xl=-activ_external_extension,
-        yl=width + activ_internal_extension,
-        ox=via_over,
-        oy=via_over,
-        ws=cont_size,
-        ds=cont_dist,
+    # Create Metal5 pin at the right
+    metal5_feed_origin = (
+        width + RING_INNER_MARGIN,
+        (length - METAL_1_PAD_LENGTH) / 2.0,
     )
-    # Bottom extension
-    contactArray(
-        c=c,
-        length=length + 2 * activ_external_extension,
-        width=activ_external_extension - activ_internal_extension,
-        contactLayer=layer_cont,
-        xl=-activ_external_extension,
-        yl=-activ_external_extension,
-        ox=via_over,
-        oy=via_over,
-        ws=cont_size,
-        ds=cont_dist,
+    metal5_feed_size = (RING_OUTER_MARGIN - RING_INNER_MARGIN, METAL_1_PAD_LENGTH)
+    add_rect(c, size=metal5_feed_size, layer=layer_metal5, origin=metal5_feed_origin)
+    add_rect(
+        c, size=metal5_feed_size, layer=layer_metal5_pin, origin=metal5_feed_origin
     )
-    # Left extension
-    contactArray(
-        c=c,
-        length=activ_external_extension - activ_internal_extension,
-        width=width + 2 * activ_internal_extension,
-        contactLayer=layer_cont,
-        xl=-activ_external_extension,
-        yl=-activ_internal_extension,
-        ox=via_over,
-        oy=via_over,
-        ws=cont_size,
-        ds=cont_dist,
-    )
-    # Right bottom extension
-    contactArray(
-        c=c,
-        length=activ_external_extension - activ_internal_extension,
-        width=width / 2 + activ_internal_extension - feed_width / 2,
-        contactLayer=layer_cont,
-        xl=length + activ_internal_extension,
-        yl=-activ_internal_extension,
-        ox=via_over,
-        oy=via_over,
-        ws=cont_size,
-        ds=cont_dist,
-    )
-    # Right top extension
-    contactArray(
-        c=c,
-        length=activ_external_extension - activ_internal_extension,
-        width=width / 2 + activ_internal_extension - feed_width / 2,
-        contactLayer=layer_cont,
-        xl=length + activ_internal_extension,
-        yl=width / 2 + feed_width / 2,
-        ox=via_over,
-        oy=via_over,
-        ws=cont_size,
-        ds=cont_dist,
-    )
-    # ----------------
-    # Metal 1 pin
-    # ----------------
-    metal1_pin = c << gf.components.rectangle(
-        size=(
-            length + 2 * activ_external_extension,
-            activ_external_extension - activ_internal_extension,
-        ),
-        layer=layer_metal1_pin,
-    )
-    metal1_pin.xmin = -activ_external_extension
-    metal1_pin.ymin = -activ_external_extension
 
-    c.add_polygon(
-        [
-            (length + mim_over, width / 2 + feed_width / 2),
-            (length + mim_over, width / 2 - feed_width / 2),
-            (length + activ_external_extension, width / 2 - feed_width / 2),
-            (length + activ_external_extension, width / 2 + feed_width / 2),
-        ],
-        layer=layer_metal5,
+    # Metal1 pin
+    metal1_pin_origin = (-RING_OUTER_MARGIN, -RING_OUTER_MARGIN)
+    metal1_pin_size = (
+        width + 2 * RING_OUTER_MARGIN,
+        RING_OUTER_MARGIN - RING_INNER_MARGIN,
+    )
+    add_rect(c, size=metal1_pin_size, layer=layer_metal1_pin, origin=metal1_pin_origin)
+
+    # TopMetal1 pin
+    top_metal1_origin = (-RING_OUTER_MARGIN, (length - METAL_1_PAD_LENGTH) / 2.0)
+    top_metal1_size = (RING_OUTER_MARGIN - RING_INNER_MARGIN, METAL_1_PAD_LENGTH)
+    add_rect(
+        c, size=top_metal1_size, layer=layer_topmetal1_pin, origin=top_metal1_origin
+    )
+
+    # Cont layer
+    # Right vertical – lower section
+    add_contact_array(
+        c,
+        x_min=width + RING_INNER_MARGIN,
+        y_min=-RING_INNER_MARGIN,
+        x_max=width + RING_OUTER_MARGIN,
+        y_max=(length - METAL_1_PAD_LENGTH) / 2.0,
+        x_offset=CONTACT_OFFSET_X,
+        y_offset=CONTACT_OFFSET_Y,
+        contact_size=CONTACT_SIZE,
+        contact_gap=CONTACT_GAP,
+        layer_cont=layer_cont,
+    )
+
+    # Right vertical – upper section
+    add_contact_array(
+        c,
+        x_min=width + RING_INNER_MARGIN,
+        y_min=(length + METAL_1_PAD_LENGTH) / 2.0,
+        x_max=width + RING_OUTER_MARGIN,
+        y_max=length + RING_INNER_MARGIN,
+        x_offset=CONTACT_OFFSET_X,
+        y_offset=CONTACT_OFFSET_Y,
+        contact_size=CONTACT_SIZE,
+        contact_gap=CONTACT_GAP,
+        layer_cont=layer_cont,
+    )
+
+    # Left vertical
+    add_contact_array(
+        c,
+        x_min=-RING_OUTER_MARGIN,
+        y_min=-RING_INNER_MARGIN,
+        x_max=-RING_INNER_MARGIN,
+        y_max=length + RING_INNER_MARGIN,
+        x_offset=CONTACT_OFFSET_X,
+        y_offset=CONTACT_OFFSET_Y,
+        contact_size=CONTACT_SIZE,
+        contact_gap=CONTACT_GAP,
+        layer_cont=layer_cont,
+    )
+
+    # Top horizontal
+    add_contact_array(
+        c,
+        x_min=-RING_OUTER_MARGIN,
+        y_min=length + RING_INNER_MARGIN,
+        x_max=width + RING_OUTER_MARGIN,
+        y_max=length + RING_OUTER_MARGIN,
+        x_offset=CONTACT_OFFSET_X,
+        y_offset=CONTACT_OFFSET_Y,
+        contact_size=CONTACT_SIZE,
+        contact_gap=CONTACT_GAP,
+        layer_cont=layer_cont,
+    )
+
+    # Bottom horizontal
+    add_contact_array(
+        c,
+        x_min=-RING_OUTER_MARGIN,
+        y_min=-RING_OUTER_MARGIN,
+        x_max=width + RING_OUTER_MARGIN,
+        y_max=-RING_INNER_MARGIN,
+        x_offset=CONTACT_OFFSET_X,
+        y_offset=CONTACT_OFFSET_Y,
+        contact_size=CONTACT_SIZE,
+        contact_gap=CONTACT_GAP,
+        layer_cont=layer_cont,
     )
 
     # Add ports
+    # Left port
+    left_port_center = (-(RING_OUTER_MARGIN - 1.0), (length + METAL_1_PAD_LENGTH) / 2.0)
     c.add_port(
-        name="TIE",
-        center=(
-            length / 2,
-            -activ_internal_extension / 2 - activ_external_extension / 2,
-        ),
-        width=activ_external_extension - activ_internal_extension,
+        name="P1",
+        center=left_port_center,
+        width=RING_OUTER_MARGIN - RING_INNER_MARGIN,
         orientation=180,
-        layer=layer_metal1_pin,
+        layer=layer_topmetal1_pin,
         port_type="electrical",
     )
 
+    # Right port
+    right_port_center = (
+        length + (RING_OUTER_MARGIN - 1.0),
+        (length + METAL_1_PAD_LENGTH) / 2.0,
+    )
     c.add_port(
-        name="MINUS",
-        center=(
-            length + activ_internal_extension / 2 + activ_external_extension / 2,
-            width / 2,
-        ),
-        width=feed_width / 2,
+        name="P2",
+        center=right_port_center,
+        width=RING_OUTER_MARGIN - RING_INNER_MARGIN,
         orientation=0,
         layer=layer_metal5_pin,
         port_type="electrical",
     )
 
+    # Bottom port
+    bottom_port_center = (length / 2.0, -(RING_OUTER_MARGIN - 1.0))
     c.add_port(
-        name="PLUS",
-        center=(
-            -activ_internal_extension / 2 - activ_external_extension / 2,
-            width / 2,
-        ),
-        width=feed_width / 2,
-        orientation=180,
-        layer=layer_topmetal1_pin,
+        name="GND",
+        center=bottom_port_center,
+        width=2 * RING_OUTER_MARGIN + length,
+        orientation=270,
+        layer=layer_metal1_pin,
         port_type="electrical",
     )
 
-    c.add_label("rfcmim", layer=layer_text, position=(length / 2, width + 2.0))
-    c.add_label(
-        "MINUS",
-        layer=layer_text,
-        position=(
-            length + activ_external_extension / 2 + activ_internal_extension / 2,
-            width / 2,
-        ),
-    )
-    c.add_label(
-        "PLUS",
-        layer=layer_text,
-        position=(
-            -activ_external_extension / 2 - activ_internal_extension / 2,
-            width / 2,
-        ),
-    )
-    c.add_label(
-        "TIE",
-        layer=layer_text,
-        position=(
-            length / 2,
-            -activ_external_extension / 2 - activ_internal_extension / 2,
-        ),
-    )
-    c.add_label(
-        f"C={round(capacitance * 1e15, 1)}f",
-        layer=layer_text,
-        position=(length / 2, -2.0),
-    )
-
     # Add metadata
-    c.info["model"] = "rfcmim"
+    c.info["model"] = model
     c.info["width"] = width
     c.info["length"] = length
     c.info["capacitance_fF"] = capacitance
@@ -706,19 +728,18 @@ def rfcmim(
 if __name__ == "__main__":
     from gdsfactory.difftest import xor
 
-    from ihp import PDK, cells2
+    from ihp import PDK
+    from ihp.cells import fixed
 
     PDK.activate()
 
     # Test the components
-    width = 6.99
-    length = 6.99
-    # c0 = cells2.cmim(width=width, length=length)  # original
-    # c1 = cmim(width=width, length=length)  # New
-    # c_cmim = xor(c0, c1)
-    # c_cmim.show()
+    # c0 = cells2.cmim()  # original
+    # c1 = cmim(width=6.99, length=6.99)  # New
+    # c = xor(c0, c1)
+    # c.show()
 
-    c0_rf = cells2.rfcmim(width=width, length=length)  # original
-    c1_rf = rfcmim(width=width, length=length)  # New
-    c_rfcmim = xor(c0_rf, c1_rf)
-    c_rfcmim.show()
+    c0 = fixed.rfcmim()  # original
+    c1 = rfcmim(width=7.0, length=7.0)  # New
+    c = xor(c0, c1)
+    c.show()
