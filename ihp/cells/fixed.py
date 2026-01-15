@@ -168,7 +168,7 @@ def SVaricap() -> gf.Component:
       "model" : "svaricap",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_svaricap_mod.lib",
-      "port_order" : ["G1", "W", "G2", "bn"]
+      "port_order" : ["G1", "W", "G2", "bn"],
     }
     
     return c
@@ -251,7 +251,7 @@ def bondpad() -> gf.Component:
         "model" : "bondpad",
         "spice_type" : "SUBCKT",
         "spice_lib" : "sg13g2_bondpad.lib",
-        "port_order" : ["PAD"]
+        "port_order" : ["PAD"],
     }
     
     return c
@@ -289,7 +289,7 @@ def cmim() -> gf.Component:
         "model" : "cmim",
         "spice_type" : "SUBCKT",
         "spice_lib" : "capacitors_mod.lib",
-        "port_order" : ["PLUS", "MINUS"]
+        "port_order" : ["PLUS", "MINUS"],
     }
     
     return c
@@ -327,7 +327,7 @@ def dantenna() -> gf.Component:
       "model" : "dantenna",
       "spice_type" : "SUBCKT",
       "spice_lib" : "diodes.lib",
-      "port_order" : ["1", "2"]
+      "port_order" : ["1", "2"],
     }
     
     return c
@@ -364,7 +364,7 @@ def diodevdd_2kv() -> gf.Component:
       "model" : "diodevdd_2kv",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_esd.lib",
-      "port_order" : ["VDD", "PAD", "VSS"]
+      "port_order" : ["VDD", "PAD", "VSS"],
     }
     
     return c
@@ -387,7 +387,7 @@ def diodevdd_4kv() -> gf.Component:
       "model" : "diodevdd_4kv",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_esd.lib",
-      "port_order" : ["VDD", "PAD", "VSS"]
+      "port_order" : ["VDD", "PAD", "VSS"],
     }
     
     return c
@@ -410,7 +410,7 @@ def diodevss_2kv() -> gf.Component:
       "model" : "diodevss_2kv",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_esd.lib",
-      "port_order" : ["VDD", "PAD", "VSS"]
+      "port_order" : ["VDD", "PAD", "VSS"],
     }
     
     return c
@@ -433,7 +433,7 @@ def diodevss_4kv() -> gf.Component:
       "model" : "diodevss_4kv",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_esd.lib",
-      "port_order" : ["VDD", "PAD", "VSS"]
+      "port_order" : ["VDD", "PAD", "VSS"],
     }
     
     return c
@@ -456,7 +456,7 @@ def dpantenna() -> gf.Component:
       "model" : "dpantenna",
       "spice_type" : "SUBCKT",
       "spice_lib" : "diodes.lib",
-      "port_order" : ["1", "2"]
+      "port_order" : ["1", "2"],
     }
     
     return c
@@ -479,7 +479,7 @@ def dummy1() -> gf.Component:
       "model" : "dummy1",
       "spice_type" : "RESISTOR",
       "spice_lib" : "sg13g2_svaricaphv_mod.lib",
-      "port_order" : ["W", "2"]
+      "port_order" : ["W", "2"],
     }
     
     return c
@@ -547,7 +547,7 @@ def isolbox() -> gf.Component:
       "model" : "isolbox",
       "spice_type" : "SUBCKT",
       "spice_lib" : "diodes.lib",
-      "port_order" : ["isoub", "NWell", "bn"]
+      "port_order" : ["isoub", "NWell", "bn"],
     }
     
     return c
@@ -585,7 +585,7 @@ def nmos() -> gf.Component:
       "model" : "sg13_lv_nmos",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_moslv_mod.lib",
-      "port_order" : ["d","g","s","b"]
+      "port_order" : ["d","g","s","b"],
     }
     
     return c
@@ -608,7 +608,7 @@ def nmosHV() -> gf.Component:
       "model" : "sg13_hv_nmos",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_moshv_mod.lib",
-      "port_order" : ["d","g","s","b"]
+      "port_order" : ["d","g","s","b"],
     }
     
     return c
@@ -631,7 +631,7 @@ def nmoscl_2() -> gf.Component:
       "model" : "nmoscl_2",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_moslv_mod.lib",
-      "port_order" : ["VDD", "VSS"]
+      "port_order" : ["VDD", "VSS"],
     }
     
     return c
@@ -654,7 +654,7 @@ def nmoscl_4() -> gf.Component:
       "model" : "nmoscl_4",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_moslv_mod.lib",
-      "port_order" : ["VDD", "VSS"]
+      "port_order" : ["VDD", "VSS"],
     }
     
     return c
@@ -677,7 +677,7 @@ def npn13G2() -> gf.Component:
       "model" : "npn13G2",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_hbt_mod.lib",
-      "port_order" : ["c", "b", "e", "bn"]
+      "port_order" : ["c", "b", "e", "bn"],
     }
     
     return c
@@ -700,7 +700,7 @@ def npn13G2L() -> gf.Component:
       "model" : "npn13G2l",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_hbt_mod.lib",
-      "port_order" : ["c", "b", "e", "bn"]
+      "port_order" : ["c", "b", "e", "bn"],
     }
     
     return c
@@ -723,7 +723,7 @@ def npn13G2V() -> gf.Component:
       "model" : "npn13G2v",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_hbt_mod.lib",
-      "port_order" : ["c", "b", "e", "bn"]
+      "port_order" : ["c", "b", "e", "bn"],
     }
     
     return c
@@ -777,7 +777,7 @@ def ntap1() -> gf.Component:
       "model" : "ntap1",
       "spice_type" : "SUBCKT",
       "spice_lib" : "resistors.lib",
-      "port_order" : ["1","2"]
+      "port_order" : ["1","2"],
     }
     
     return c
@@ -800,7 +800,7 @@ def pmos() -> gf.Component:
       "model" : "sg13_lv_pmos",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_moslv_mod.lib",
-      "port_order" : ["d","g","s","b"]
+      "port_order" : ["d","g","s","b"],
     }
     
     return c
@@ -823,8 +823,10 @@ def pmosHV() -> gf.Component:
       "model" : "sg13_hv_pmos",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_moshv_mod.lib",
-      "port_order" : ["d","g","s","b"]
+      "port_order" : ["d","g","s","b"],
     }
+    
+    return c
 
 
 @gf.cell
@@ -844,7 +846,7 @@ def pnpMPA() -> gf.Component:
       "model" : "pnpMPA",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_hbt_mod.lib",
-      "port_order" : ["c", "b", "e"]
+      "port_order" : ["c", "b", "e"],
     }
     
     return c
@@ -883,7 +885,7 @@ def ptap1() -> gf.Component:
       "model" : "ptap1",
       "spice_type" : "SUBCKT",
       "spice_lib" : "resistors.lib",
-      "port_order" : ["1","2"]
+      "port_order" : ["1","2"],
     }
     
     return c
@@ -906,7 +908,7 @@ def rfcmim() -> gf.Component:
       "model" : "cap_rfcmim",
       "spice_type" : "SUBCKT",
       "spice_lib" : "capacitors_mod.lib",
-      "port_order" : ["PLUS", "MINUS", "bn"]
+      "port_order" : ["PLUS", "MINUS", "bn"],
     }
     
     return c
@@ -1027,7 +1029,7 @@ def rhigh() -> gf.Component:
       "model" : "rhigh",
       "spice_type" : "SUBCKT",
       "spice_lib" : "resistors.lib",
-      "port_order" : ["1", "3", "bn"]
+      "port_order" : ["1", "3", "bn"],
     }
     
     return c
@@ -1049,7 +1051,7 @@ def rppd() -> gf.Component:
       "model" : "rppd",
       "spice_type" : "SUBCKT",
       "spice_lib" : "resistors.lib",
-      "port_order" : ["1", "3", "bn"]
+      "port_order" : ["1", "3", "bn"],
     }
     
     return c
@@ -1072,7 +1074,7 @@ def rsil() -> gf.Component:
       "model" : "rsil",
       "spice_type" : "SUBCKT",
       "spice_lib" : "resistors.lib",
-      "port_order" : ["1", "3", "bn"]
+      "port_order" : ["1", "3", "bn"],
     }
     
     return c
@@ -1095,7 +1097,7 @@ def schottky_nbl1() -> gf.Component:
       "model" : "schottky_nbl1",
       "spice_type" : "SUBCKT",
       "spice_lib" : "sg13g2_dschottky_nbl1_mod.lib",
-      "port_order" : ["A","C","S"]
+      "port_order" : ["A","C","S"],
     }
     
     return c

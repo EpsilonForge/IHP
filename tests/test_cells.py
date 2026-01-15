@@ -13,7 +13,7 @@ from pytest_regressions.data_regression import DataRegressionFixture
 from pytest_regressions.ndarrays_regression import NDArraysRegressionFixture
 
 from ihp import PDK
-from ihp.models.to_vlsir import to_proto, to_spice
+from ihp.models.to_vlsir import to_proto, to_spice, validate_vlsir_metadata
 
 
 @pytest.fixture(autouse=True)
@@ -177,6 +177,93 @@ def test_vlsir_to_spice(component_name: str) -> None:
     # Verify we got a non-empty netlist string
     assert isinstance(netlist, str)
     assert len(netlist) > 0
+
+
+class TestVlsirValidationErrors:
+    """Test error handling for invalid vlsir metadata."""
+
+    def test_missing_vlsir_metadata(self) -> None:
+        """Test that missing vlsir metadata raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+
+        with pytest.raises(ValueError, match="missing required 'vlsir' metadata"):
+            validate_vlsir_metadata(c)
+
+    def test_missing_model_field(self) -> None:
+        """Test that missing 'model' field raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+        c.info["vlsir"] = {
+            "spice_type": "RESISTOR",
+            "port_order": ["p"],
+        }
+
+        with pytest.raises(ValueError, match="missing required fields.*model"):
+            validate_vlsir_metadata(c)
+
+    def test_missing_spice_type_field(self) -> None:
+        """Test that missing 'spice_type' field raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+        c.info["vlsir"] = {
+            "model": "rpoly",
+            "port_order": ["p"],
+        }
+
+        with pytest.raises(ValueError, match="missing required fields.*spice_type"):
+            validate_vlsir_metadata(c)
+
+    def test_missing_port_order_field(self) -> None:
+        """Test that missing 'port_order' field raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+        c.info["vlsir"] = {
+            "model": "rpoly",
+            "spice_type": "RESISTOR",
+        }
+
+        with pytest.raises(ValueError, match="missing required fields.*port_order"):
+            validate_vlsir_metadata(c)
+
+    def test_unsupported_spice_type(self) -> None:
+        """Test that unsupported spice_type raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+        c.info["vlsir"] = {
+            "model": "rpoly",
+            "spice_type": "INVALID_TYPE",
+            "port_order": ["p"],
+        }
+
+        with pytest.raises(ValueError, match="unknown spice_type 'INVALID_TYPE'"):
+            validate_vlsir_metadata(c)
+
+    def test_port_order_not_on_component(self) -> None:
+        """Test that port_order with non-existent ports raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+        c.info["vlsir"] = {
+            "model": "rpoly",
+            "spice_type": "RESISTOR",
+            "port_order": ["p", "n"],  # 'n' does not exist
+        }
+
+        with pytest.raises(ValueError, match="port_order contains ports not found"):
+            validate_vlsir_metadata(c)
+
+    def test_empty_port_order(self) -> None:
+        """Test that empty port_order raises ValueError."""
+        c = gf.Component()
+        c.add_port(name="p", center=(0, 0), width=0.1, orientation=180, layer=(1, 0))
+        c.info["vlsir"] = {
+            "model": "rpoly",
+            "spice_type": "RESISTOR",
+            "port_order": [],
+        }
+
+        with pytest.raises(ValueError, match="port_order must be a non-empty list"):
+            validate_vlsir_metadata(c)
 
 
 if __name__ == "__main__":

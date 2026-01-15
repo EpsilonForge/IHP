@@ -127,7 +127,7 @@ def vsource(dc: float = 0.0, ac: float = 0.0) -> gf.Component:
 
 @gf.cell
 def isource(dc: float = 0.0, ac: float = 0.0) -> gf.Component:
-    """Voltage Source"""
+    """Current Source"""
     c = gf.Component()
     c.add_port(name="p", center=(0, 0), width=0.0, orientation=180, layer=SCHEM_LAYER)
     c.add_port(name="n", center=(1, 0), width=0.0, orientation=0, layer=SCHEM_LAYER)

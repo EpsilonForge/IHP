@@ -8,7 +8,7 @@ Required vlsir info structure:
         "model": "nmos",           # Required: SPICE model name
         "spice_type": "MOS",       # Required: SpiceType (MOS, RESISTOR, etc.)
         "port_order": ["D", "G", "S", "B"],  # Required: Port names in SPICE order
-        "params": {"w": 1e-6, "l": 100e-9},  # Required: Device parameters
+        "params": {"w": 1e-6, "l": 100e-9},  # Optional: Device parameters
     }
 
 Usage:
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 
 # Required fields in vlsir metadata
-REQUIRED_VLSIR_FIELDS = ("model", "spice_type", "port_order", "params")
+REQUIRED_VLSIR_FIELDS = ("model", "spice_type", "port_order")
 
 # Mapping from string names to proto enum values
 _SPICE_TYPE_MAP: dict[str, int] = {
@@ -82,7 +82,7 @@ def validate_vlsir_metadata(component: Component) -> dict[str, Any]:
         raise ValueError(
             f"Component '{component.name}' missing required 'vlsir' metadata in .info dict. "
             f"Expected: component.info['vlsir'] = {{'model': ..., 'spice_type': ..., "
-            f"'port_order': [...], 'params': {{...}}}}"
+            f"'port_order': [...]}}"
         )
 
     vlsir_info = component.info["vlsir"]
@@ -108,6 +108,16 @@ def validate_vlsir_metadata(component: Component) -> dict[str, Any]:
         raise ValueError(
             f"Component '{component.name}' port_order must be a non-empty list, "
             f"got: {port_order}"
+        )
+
+    # Validate port_order names exist as actual ports on the component
+    component_ports = set(component.ports.keys())
+    port_order_set = set(port_order)
+    missing_ports = port_order_set - component_ports
+    if missing_ports:
+        raise ValueError(
+            f"Component '{component.name}' port_order contains ports not found on component: "
+            f"{sorted(missing_ports)}. Available ports: {sorted(component_ports)}"
         )
 
     return vlsir_info

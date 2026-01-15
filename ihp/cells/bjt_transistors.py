@@ -720,7 +720,7 @@ def npn13G2(
             "model": "npn13G2",
             "spice_type" : "SUBCKT",
             "spice_lib" : "sg13g2_hbt_mod.lib",
-            "ports_order" : ["c", "b", "e", "bn"],
+            "port_order" : ["c", "b", "e", "bn"],
             "params" : {
                 "Nx" : Nx,
                 "Ny" : Ny,
@@ -1286,7 +1286,7 @@ def npn13G2L(
         "model": "npn13G2l",
         "spice_type" : "SUBCKT",
         "spice_lib" : "sg13g2_hbt_mod.lib",
-        "ports_order" : ["c", "b", "e", "bn"],
+        "port_order" : ["c", "b", "e", "bn"],
         "params" : {
             "we" : emitter_width * 1e-6,
             "le" : emitter_length * 1e-6,
@@ -1869,7 +1869,7 @@ def npn13G2V(
         "model": "npn13G2v",
         "spice_type" : "SUBCKT",
         "spice_lib" : "sg13g2_hbt_mod.lib",
-        "ports_order" : ["c", "b", "e", "bn"],
+        "port_order" : ["c", "b", "e", "bn"],
         "params" : {
             "we" : emitter_width * 1e-6,
             "le" : emitter_length * 1e-6,
@@ -2415,7 +2415,7 @@ def pnpMPA(length: float = 2, width: float = 0.7) -> gf.Component:
         "model": "pnpMPA",
         "spice_type" : "SUBCKT",
         "spice_lib" : "sg13g2_hbt_mod.lib",
-        "ports_order" : ["c", "b", "e"],
+        "port_order" : ["c", "b", "e"],
         #TODO: Understand meaning of pnpMPA params
     }
 

@@ -237,7 +237,7 @@ def dantenna(
         "model": "dantenna",
         "spice_type" : "SUBCKT",
         "spice_lib" : "diodes.lib",
-        "ports_order" : ["1", "2"],
+        "port_order" : ["1", "2"],
         "params" : {
             "w" : width * 1e-6,
             "l" : length * 1e-6
@@ -359,7 +359,7 @@ def dpantenna(
         "model": "dpantenna",
         "spice_type" : "SUBCKT",
         "spice_lib" : "diodes.lib",
-        "ports_order" : ["1", "2"],
+        "port_order" : ["1", "2"],
         "params" : {
             "w" : width * 1e-6,
             "l" : length * 1e-6
