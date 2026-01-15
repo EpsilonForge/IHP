@@ -183,6 +183,19 @@ def rsil(
         }
     )
 
+    # VLSIR simulation metadata
+    c.info["vlsir"] = {
+        "model" : model,
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "resistors_mod.lib",
+        "port_order" : ["1", "2", "bn"],
+        "params" : {
+            "w" : dx * 1e-6,
+            "l" : dy * 1e-6,
+            "m" : 1
+        }
+    }
+
     return c
 
 
@@ -191,7 +204,7 @@ def rppd(
     dy: float = 0.5,
     dx: float = 0.5,
     resistance: float | None = None,
-    model: str = "rsil",
+    model: str = "rppd",
     layer_poly: LayerSpec = "PolyResdrawing",
     layer_heat: LayerSpec = "HeatResdrawing",
     layer_gate: LayerSpec = "GatPolydrawing",
@@ -364,6 +377,19 @@ def rppd(
         }
     )
 
+    # VLSIR simulation metadata
+    c.info["vlsir"] = {
+        "model" : model,
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "resistors_mod.lib",
+        "port_order" : ["1", "3", "bn"],
+        "params" : {
+            "w" : dx * 1e-6,
+            "l" : dy * 1e-6,
+            "m" : 1
+        }
+    }
+
     return c
 
 
@@ -372,7 +398,7 @@ def rhigh(
     dy: float = 0.96,
     dx: float = 0.5,
     resistance: float | None = None,
-    model: str = "rsil",
+    model: str = "rhigh",
     layer_poly: LayerSpec = "PolyResdrawing",
     layer_heat: LayerSpec = "HeatResdrawing",
     layer_gate: LayerSpec = "GatPolydrawing",
@@ -545,6 +571,19 @@ def rhigh(
             "n_squares": n_squares,
         }
     )
+
+    # VLSIR simulation metadata
+    c.info["vlsir"] = {
+        "model" : model,
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "resistors_mod.lib",
+        "port_order" : ["1", "3", "bn"],
+        "params" : {
+            "w" : dx * 1e-6,
+            "l" : dy * 1e-6,
+            "m" : 1
+        }
+    }
 
     return c
 

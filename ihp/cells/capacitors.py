@@ -510,6 +510,19 @@ def cmim(
     c.info["length"] = length
     c.info["capacitance_fF"] = capacitance
     c.info["area_um2"] = width * length
+    
+    # VLSIR simulation metadata
+    c.info["vlsir"] = {
+        "model" : "cap_cmim",
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "capacitors_mod.lib",
+        "port_order" : ["PLUS", "MINUS"],
+        "params" : {
+            "w" : width * 1e-6,
+            "l" : length * 1e-6
+        }
+    }
+
     return c
 
 
@@ -680,8 +693,18 @@ def rfcmim(
     )
     c.add_label(text="TIE_LOW", position=(tie.x, tie.y), layer=layer_metal1label)
     c.add_label(text="TIE_LOW", position=(tie.x, tie.y), layer=layer_text)
-
-    c.info["model"] = model
+    
+    # VLSIR simulation metadata
+    c.info["vlsir"] = {
+        "model" : "cap_rfcmim",
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "capacitors_mod.lib",
+        "port_order" : ["PLUS", "MINUS"],
+        "params" : {
+            "l" : length * 1e-6,
+            "w" : width * 1e-6
+        }
+    }
 
     return c
 

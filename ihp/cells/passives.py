@@ -19,7 +19,7 @@ def svaricap(
     width: float = 1.0,
     length: float = 1.0,
     nf: int = 1,
-    model: str = "svaricap",
+    model: str = "sg13_hv_svaricap",
     layer_nwell: LayerSpec = "NWelldrawing",
     layer_activ: LayerSpec = "Activdrawing",
     layer_gatpoly: LayerSpec = "GatPolydrawing",
@@ -174,12 +174,17 @@ def svaricap(
         port_type="electrical",
     )
 
-    # Add metadata
-    c.info["model"] = model
-    c.info["width"] = width
-    c.info["length"] = length
-    c.info["nf"] = nf
-    c.info["type"] = "varicap"
+    # Add VLSIR metadata
+    c.info["vlsir"] = {
+        "model": model,
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "sg13g2_svaricaphv_mod.lib",
+        "ports_order" : ["G1","W","G2","bn"],
+        # Params
+        "w" : width * 1e-6,
+        "l" : length * 1e-6,
+        "Nx" : nf
+    }
 
     return c
 
@@ -189,7 +194,7 @@ def esd_nmos(
     width: float = 50.0,
     length: float = 0.5,
     nf: int = 10,
-    model: str = "esd_nmos",
+    model: str = "nmoscl_2",
     layer_pwell: LayerSpec = "PWelldrawing",
     layer_activ: LayerSpec = "Activdrawing",
     layer_gatpoly: LayerSpec = "GatPolydrawing",
@@ -351,12 +356,17 @@ def esd_nmos(
         port_type="electrical",
     )
 
-    # Add metadata
-    c.info["model"] = model
-    c.info["width"] = width
-    c.info["length"] = length
-    c.info["nf"] = nf
-    c.info["type"] = "esd_nmos"
+    # Add VLSIR metadata
+    c.info["vlsir"] = {
+        "model": model,
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "sg13g2_moslv_mod.lib",
+        "ports_order" : ["VDD", "VSS"],
+        # Params
+        "w" : width * 1e-6,
+        "l" : length * 1e-6,
+        "ng" : nf
+    }
 
     return c
 
@@ -457,6 +467,18 @@ def ptap1(
     c.info["length"] = length
     c.info["rows"] = rows
     c.info["cols"] = cols
+    
+    # Add VLSIR metadata
+    c.info["vlsir"] = {
+        "model": "ptap1",
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "resistors_mod.lib",
+        "ports_order" : ["1", "2"],
+        # Params
+        "w" : width * 1e-6,
+        "l" : length * 1e-6,
+        #TODO: Translate "rows, cols"
+    }
 
     return c
 
@@ -568,6 +590,18 @@ def ntap1(
     c.info["length"] = length
     c.info["rows"] = rows
     c.info["cols"] = cols
+    
+    # Add VLSIR metadata
+    c.info["vlsir"] = {
+        "model": "ntap1",
+        "spice_type" : "SUBCKT",
+        "spice_lib" : "resistors_mod.lib",
+        "ports_order" : ["1", "2"],
+        # Params
+        "w" : width * 1e-6,
+        "l" : length * 1e-6,
+        #TODO: Translate "rows, cols"
+    }
 
     return c
 
