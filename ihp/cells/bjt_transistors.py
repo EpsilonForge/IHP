@@ -715,6 +715,22 @@ def npn13G2(
             port_type="electrical",
         )
 
+        # VLSIR Simulation Metadata
+        c.info["vlsir"] = {
+            "model": "npn13G2",
+            "spice_type": "SUBCKT",
+            "spice_lib": "sg13g2_hbt_mod.lib",
+            "port_order": ["c", "b", "e", "bn"],
+            "params": {
+                "Nx": Nx,
+                "Ny": Ny,
+                "we": emitter_width * 1e-6,
+                "le": emitter_length * 1e-6,
+            },
+        }
+
+        # TODO: Extend to handle empoly, bipwin, cmet
+
     return c
 
 
@@ -1264,6 +1280,18 @@ def npn13G2L(
             0.5 * (emitter_pin_ymin + emitter_pin_ymax),
         ),
     )
+
+    # VLSIR Simulation Metadata
+    c.info["vlsir"] = {
+        "model": "npn13G2l",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e", "bn"],
+        "params": {
+            "we": emitter_width * 1e-6,
+            "le": emitter_length * 1e-6,
+        },
+    }
 
     return c
 
@@ -1836,6 +1864,18 @@ def npn13G2V(
         ),
     )
 
+    # VLSIR Simulation Metadata
+    c.info["vlsir"] = {
+        "model": "npn13G2v",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e", "bn"],
+        "params": {
+            "we": emitter_width * 1e-6,
+            "le": emitter_length * 1e-6,
+        },
+    }
+
     return c
 
 
@@ -2370,6 +2410,14 @@ def pnpMPA(length: float = 2, width: float = 0.7) -> gf.Component:
         orientation=270.0,
         port_type="electrical",
     )
+
+    c.info["vlsir"] = {
+        "model": "pnpMPA",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e"],
+        # TODO: Understand meaning of pnpMPA params
+    }
 
     return c
 

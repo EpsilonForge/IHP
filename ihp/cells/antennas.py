@@ -232,6 +232,16 @@ def dantenna(
             )
         ).move((-diods_over, -diods_over))
 
+    # VLSIR Simulation Metadata
+    c.info["vlsir"] = {
+        "model": "dantenna",
+        "spice_type": "SUBCKT",
+        "spice_lib": "diodes.lib",
+        "port_order": ["1", "2"],
+        "port_map": {},  # No physical ports defined on component
+        "params": {"w": width * 1e-6, "l": length * 1e-6},
+    }
+
     return c
 
 
@@ -341,6 +351,16 @@ def dpantenna(
             layer=layer_nwell,
         )
     ).move((-NW_c, -NW_c))
+
+    # VLSIR Simulation Metadata
+    c.info["vlsir"] = {
+        "model": "dpantenna",
+        "spice_type": "SUBCKT",
+        "spice_lib": "diodes.lib",
+        "port_order": ["1", "2"],
+        "port_map": {},  # No physical ports defined on component
+        "params": {"w": width * 1e-6, "l": length * 1e-6},
+    }
 
     return c
 
