@@ -130,7 +130,7 @@ src = "README.md"
 src = "pyproject.toml"
 
 [[tool.tbump.file]]
-src = ["ihp/__init__.py"]
+src = "ihp/__init__.py"
 
 [tool.tbump.git]
 message_template = "Bump to {new_version}"
