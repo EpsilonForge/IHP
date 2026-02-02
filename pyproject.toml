@@ -12,9 +12,11 @@ classifiers = [
   "Programming Language :: Python :: 3.13"
 ]
 dependencies = [
-  "gdsfactory~=9.29.1",
+  "gdsfactory~=9.34.0",
   "gplugins[sax]~=2.0.0",
-  "doroutes>=0.2.0"
+  "doroutes>=0.2.0",
+  "vlsir>=7.0.0",
+  "vlsirtools>=7.0.0"
 ]
 description = "IHP pdk"
 keywords = ["python"]
@@ -36,8 +38,8 @@ dev = [
 docs = ["autodoc_pydantic", "jupytext", "jupyter-book==1.0.3"]
 
 [tool.codespell]
-ignore-words-list = "te,fpr,nd,donot,schem,contnet,Contnet,rady"
-skip = "*.lock,*.svg,*.gds,*.oas"
+ignore-words-list = "te,fpr,nd,donot,schem,contnet,Contnet,rady,inout,INOUT"
+skip = "*.lock,*.svg,*.gds,*.oas,*.lib"
 
 [tool.gdsfactoryplus]
 name = "ihp"
@@ -104,7 +106,7 @@ include-package-data = true
 "*" = ["*.csv", "*.yaml", "*.yml", "*.gds", "*.lyp", "*.oas", "*.lyt", "*.dat", "*.nc", "*.svg", '*.GDS', "*.json", "*.txt"]
 
 [tool.setuptools.packages.find]
-include = ["ihp.*", "cni.*"]
+include = ["ihp", "ihp.*", "cni", "cni.*"]
 where = [".", "ihp", "cni"]
 
 [tool.tbump]
@@ -128,14 +130,14 @@ src = "README.md"
 src = "pyproject.toml"
 
 [[tool.tbump.file]]
-src = ["ihp/__init__.py"]
+src = "ihp/__init__.py"
 
 [tool.tbump.git]
 message_template = "Bump to {new_version}"
 tag_template = "v{new_version}"
 
 [tool.tbump.version]
-current = "0.1.0"
+current = "0.1.5"
 regex = '''
   (?P<major>\d+)
   \.

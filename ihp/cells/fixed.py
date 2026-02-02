@@ -163,7 +163,16 @@ def SVaricap() -> gf.Component:
       c = ihp.cells.SVaricap()
       c.plot()
     """
-    return import_gds(gdsdir / "SVaricap.gds")
+    c = import_gds(gdsdir / "SVaricap.gds")
+    c.info["vlsir"] = {
+        "model": "svaricap",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_svaricap_mod.lib",
+        "port_order": ["G1", "W", "G2", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -238,7 +247,16 @@ def bondpad() -> gf.Component:
       c = ihp.cells.bondpad()
       c.plot()
     """
-    return import_gds(gdsdir / "bondpad.gds")
+    c = import_gds(gdsdir / "bondpad.gds")
+    c.info["vlsir"] = {
+        "model": "bondpad",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_bondpad.lib",
+        "port_order": ["PAD"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -268,7 +286,16 @@ def cmim() -> gf.Component:
       c = ihp.cells.cmim()
       c.plot()
     """
-    return import_gds(gdsdir / "cmim.gds")
+    c = import_gds(gdsdir / "cmim.gds")
+    c.info["vlsir"] = {
+        "model": "cmim",
+        "spice_type": "SUBCKT",
+        "spice_lib": "capacitors_mod.lib",
+        "port_order": ["PLUS", "MINUS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -298,7 +325,16 @@ def dantenna() -> gf.Component:
       c = ihp.cells.dantenna()
       c.plot()
     """
-    return import_gds(gdsdir / "dantenna.gds")
+    c = import_gds(gdsdir / "dantenna.gds")
+    c.info["vlsir"] = {
+        "model": "dantenna",
+        "spice_type": "SUBCKT",
+        "spice_lib": "diodes.lib",
+        "port_order": ["1", "2"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -328,7 +364,16 @@ def diodevdd_2kv() -> gf.Component:
       c = ihp.cells.diodevdd_2kv()
       c.plot()
     """
-    return import_gds(gdsdir / "diodevdd_2kv.gds")
+    c = import_gds(gdsdir / "diodevdd_2kv.gds")
+    c.info["vlsir"] = {
+        "model": "diodevdd_2kv",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_esd.lib",
+        "port_order": ["VDD", "PAD", "VSS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -343,7 +388,16 @@ def diodevdd_4kv() -> gf.Component:
       c = ihp.cells.diodevdd_4kv()
       c.plot()
     """
-    return import_gds(gdsdir / "diodevdd_4kv.gds")
+    c = import_gds(gdsdir / "diodevdd_4kv.gds")
+    c.info["vlsir"] = {
+        "model": "diodevdd_4kv",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_esd.lib",
+        "port_order": ["VDD", "PAD", "VSS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -358,7 +412,16 @@ def diodevss_2kv() -> gf.Component:
       c = ihp.cells.diodevss_2kv()
       c.plot()
     """
-    return import_gds(gdsdir / "diodevss_2kv.gds")
+    c = import_gds(gdsdir / "diodevss_2kv.gds")
+    c.info["vlsir"] = {
+        "model": "diodevss_2kv",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_esd.lib",
+        "port_order": ["VDD", "PAD", "VSS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -373,7 +436,16 @@ def diodevss_4kv() -> gf.Component:
       c = ihp.cells.diodevss_4kv()
       c.plot()
     """
-    return import_gds(gdsdir / "diodevss_4kv.gds")
+    c = import_gds(gdsdir / "diodevss_4kv.gds")
+    c.info["vlsir"] = {
+        "model": "diodevss_4kv",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_esd.lib",
+        "port_order": ["VDD", "PAD", "VSS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -388,7 +460,16 @@ def dpantenna() -> gf.Component:
       c = ihp.cells.dpantenna()
       c.plot()
     """
-    return import_gds(gdsdir / "dpantenna.gds")
+    c = import_gds(gdsdir / "dpantenna.gds")
+    c.info["vlsir"] = {
+        "model": "dpantenna",
+        "spice_type": "SUBCKT",
+        "spice_lib": "diodes.lib",
+        "port_order": ["1", "2"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -403,7 +484,16 @@ def dummy1() -> gf.Component:
       c = ihp.cells.dummy1()
       c.plot()
     """
-    return import_gds(gdsdir / "dummy1.gds")
+    c = import_gds(gdsdir / "dummy1.gds")
+    c.info["vlsir"] = {
+        "model": "dummy1",
+        "spice_type": "RESISTOR",
+        "spice_lib": "sg13g2_svaricaphv_mod.lib",
+        "port_order": ["W", "2"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -463,7 +553,16 @@ def isolbox() -> gf.Component:
       c = ihp.cells.isolbox()
       c.plot()
     """
-    return import_gds(gdsdir / "isolbox.gds")
+    c = import_gds(gdsdir / "isolbox.gds")
+    c.info["vlsir"] = {
+        "model": "isolbox",
+        "spice_type": "SUBCKT",
+        "spice_lib": "diodes.lib",
+        "port_order": ["isoub", "NWell", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -493,7 +592,16 @@ def nmos() -> gf.Component:
       c = ihp.cells.nmos()
       c.plot()
     """
-    return import_gds(gdsdir / "nmos.gds")
+    c = import_gds(gdsdir / "nmos.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_lv_nmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moslv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -508,7 +616,16 @@ def nmosHV() -> gf.Component:
       c = ihp.cells.nmosHV()
       c.plot()
     """
-    return import_gds(gdsdir / "nmosHV.gds")
+    c = import_gds(gdsdir / "nmosHV.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_hv_nmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moshv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -523,7 +640,16 @@ def nmoscl_2() -> gf.Component:
       c = ihp.cells.nmoscl_2()
       c.plot()
     """
-    return import_gds(gdsdir / "nmoscl_2.gds")
+    c = import_gds(gdsdir / "nmoscl_2.gds")
+    c.info["vlsir"] = {
+        "model": "nmoscl_2",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moslv_mod.lib",
+        "port_order": ["VDD", "VSS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -538,7 +664,16 @@ def nmoscl_4() -> gf.Component:
       c = ihp.cells.nmoscl_4()
       c.plot()
     """
-    return import_gds(gdsdir / "nmoscl_4.gds")
+    c = import_gds(gdsdir / "nmoscl_4.gds")
+    c.info["vlsir"] = {
+        "model": "nmoscl_4",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moslv_mod.lib",
+        "port_order": ["VDD", "VSS"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -553,7 +688,16 @@ def npn13G2() -> gf.Component:
       c = ihp.cells.npn13G2()
       c.plot()
     """
-    return import_gds(gdsdir / "npn13G2.gds")
+    c = import_gds(gdsdir / "npn13G2.gds")
+    c.info["vlsir"] = {
+        "model": "npn13G2",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -568,7 +712,16 @@ def npn13G2L() -> gf.Component:
       c = ihp.cells.npn13G2L()
       c.plot()
     """
-    return import_gds(gdsdir / "npn13G2L.gds")
+    c = import_gds(gdsdir / "npn13G2L.gds")
+    c.info["vlsir"] = {
+        "model": "npn13G2l",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -583,7 +736,16 @@ def npn13G2V() -> gf.Component:
       c = ihp.cells.npn13G2V()
       c.plot()
     """
-    return import_gds(gdsdir / "npn13G2V.gds")
+    c = import_gds(gdsdir / "npn13G2V.gds")
+    c.info["vlsir"] = {
+        "model": "npn13G2v",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -613,6 +775,7 @@ def ntap() -> gf.Component:
       c = ihp.cells.ntap()
       c.plot()
     """
+    # TODO: What is this and how is it different from ntap1?
     return import_gds(gdsdir / "ntap.gds")
 
 
@@ -628,7 +791,16 @@ def ntap1() -> gf.Component:
       c = ihp.cells.ntap1()
       c.plot()
     """
-    return import_gds(gdsdir / "ntap1.gds")
+    c = import_gds(gdsdir / "ntap1.gds")
+    c.info["vlsir"] = {
+        "model": "ntap1",
+        "spice_type": "SUBCKT",
+        "spice_lib": "resistors.lib",
+        "port_order": ["1", "2"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -643,7 +815,16 @@ def pmos() -> gf.Component:
       c = ihp.cells.pmos()
       c.plot()
     """
-    return import_gds(gdsdir / "pmos.gds")
+    c = import_gds(gdsdir / "pmos.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_lv_pmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moslv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -658,7 +839,16 @@ def pmosHV() -> gf.Component:
       c = ihp.cells.pmosHV()
       c.plot()
     """
-    return import_gds(gdsdir / "pmosHV.gds")
+    c = import_gds(gdsdir / "pmosHV.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_hv_pmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moshv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -673,7 +863,16 @@ def pnpMPA() -> gf.Component:
       c = ihp.cells.pnpMPA()
       c.plot()
     """
-    return import_gds(gdsdir / "pnpMPA.gds")
+    c = import_gds(gdsdir / "pnpMPA.gds")
+    c.info["vlsir"] = {
+        "model": "pnpMPA",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_hbt_mod.lib",
+        "port_order": ["c", "b", "e"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -688,6 +887,7 @@ def ptap() -> gf.Component:
       c = ihp.cells.ptap()
       c.plot()
     """
+    # TODO: What is this and how is it different from ptap1?
     return import_gds(gdsdir / "ptap.gds")
 
 
@@ -703,7 +903,16 @@ def ptap1() -> gf.Component:
       c = ihp.cells.ptap1()
       c.plot()
     """
-    return import_gds(gdsdir / "ptap1.gds")
+    c = import_gds(gdsdir / "ptap1.gds")
+    c.info["vlsir"] = {
+        "model": "ptap1",
+        "spice_type": "SUBCKT",
+        "spice_lib": "resistors.lib",
+        "port_order": ["1", "2"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -718,7 +927,16 @@ def rfcmim() -> gf.Component:
       c = ihp.cells.rfcmim()
       c.plot()
     """
-    return import_gds(gdsdir / "rfcmim.gds")
+    c = import_gds(gdsdir / "rfcmim.gds")
+    c.info["vlsir"] = {
+        "model": "cap_rfcmim",
+        "spice_type": "SUBCKT",
+        "spice_lib": "capacitors_mod.lib",
+        "port_order": ["PLUS", "MINUS", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -733,7 +951,17 @@ def rfnmos() -> gf.Component:
       c = ihp.cells.rfnmos()
       c.plot()
     """
-    return import_gds(gdsdir / "rfnmos.gds")
+    c = import_gds(gdsdir / "rfnmos.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_lv_nmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moslv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+        "params": {"rfmode": 1},
+    }
+
+    return c
 
 
 @gf.cell
@@ -748,7 +976,17 @@ def rfnmosHV() -> gf.Component:
       c = ihp.cells.rfnmosHV()
       c.plot()
     """
-    return import_gds(gdsdir / "rfnmosHV.gds")
+    c = import_gds(gdsdir / "rfnmosHV.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_hv_nmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moshv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+        "params": {"rfmode": 1},
+    }
+
+    return c
 
 
 @gf.cell
@@ -763,7 +1001,17 @@ def rfpmos() -> gf.Component:
       c = ihp.cells.rfpmos()
       c.plot()
     """
-    return import_gds(gdsdir / "rfpmos.gds")
+    c = import_gds(gdsdir / "rfpmos.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_lv_pmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moslv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+        "params": {"rfmode": 1},
+    }
+
+    return c
 
 
 @gf.cell
@@ -778,7 +1026,17 @@ def rfpmosHV() -> gf.Component:
       c = ihp.cells.rfpmosHV()
       c.plot()
     """
-    return import_gds(gdsdir / "rfpmosHV.gds")
+    c = import_gds(gdsdir / "rfpmosHV.gds")
+    c.info["vlsir"] = {
+        "model": "sg13_hv_pmos",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_moshv_mod.lib",
+        "port_order": ["d", "g", "s", "b"],
+        "port_map": {},
+        "params": {"rfmode": 1},
+    }
+
+    return c
 
 
 @gf.cell
@@ -793,7 +1051,16 @@ def rhigh() -> gf.Component:
       c = ihp.cells.rhigh()
       c.plot()
     """
-    return import_gds(gdsdir / "rhigh.gds")
+    c = import_gds(gdsdir / "rhigh.gds")
+    c.info["vlsir"] = {
+        "model": "rhigh",
+        "spice_type": "SUBCKT",
+        "spice_lib": "resistors.lib",
+        "port_order": ["1", "3", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -808,7 +1075,16 @@ def rppd() -> gf.Component:
       c = ihp.cells.rppd()
       c.plot()
     """
-    return import_gds(gdsdir / "rppd.gds")
+    c = import_gds(gdsdir / "rppd.gds")
+    c.info["vlsir"] = {
+        "model": "rppd",
+        "spice_type": "SUBCKT",
+        "spice_lib": "resistors.lib",
+        "port_order": ["1", "3", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -823,7 +1099,16 @@ def rsil() -> gf.Component:
       c = ihp.cells.rsil()
       c.plot()
     """
-    return import_gds(gdsdir / "rsil.gds")
+    c = import_gds(gdsdir / "rsil.gds")
+    c.info["vlsir"] = {
+        "model": "rsil",
+        "spice_type": "SUBCKT",
+        "spice_lib": "resistors.lib",
+        "port_order": ["1", "3", "bn"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell
@@ -838,7 +1123,16 @@ def schottky_nbl1() -> gf.Component:
       c = ihp.cells.schottky_nbl1()
       c.plot()
     """
-    return import_gds(gdsdir / "schottky_nbl1.gds")
+    c = import_gds(gdsdir / "schottky_nbl1.gds")
+    c.info["vlsir"] = {
+        "model": "schottky_nbl1",
+        "spice_type": "SUBCKT",
+        "spice_lib": "sg13g2_dschottky_nbl1_mod.lib",
+        "port_order": ["A", "C", "S"],
+        "port_map": {},
+    }
+
+    return c
 
 
 @gf.cell

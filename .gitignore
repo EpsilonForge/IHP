@@ -1,6 +1,10 @@
 ihp-klayout/
 docs/cells.rst
 
+# Simulation outputs
+palace-sim-*/
+dev-palace-simulation-*/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -16,7 +20,7 @@ tests/gds_ref/*.oas
 docs/components.rst
 docs/components_plot.rst
 .vscode/
-
+.claude/
 
 # C extensions
 *.so
