@@ -4,7 +4,7 @@ This repository contains incomplete design files and automated layout factories 
 
 **Repository Contents**
 * `design_data`: 
-    - `qucs-s` includes the schematic  for parsing component parameters, 
+    - `qucs-s` includes the schematic for parsing component parameters, 
     - `gds` includes the layout
     - `factory` includes the factories for automated parameterized layout generation
 
