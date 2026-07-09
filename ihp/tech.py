@@ -24,8 +24,6 @@ from gdsfactory.technology import LayerLevel, LayerMap, LayerStack
 from gdsfactory.typings import Layer, LayerSpec
 from pydantic import BaseModel
 
-# Import CNI tech for cells2 compatibility
-from cni.tech import Tech as _CNITech
 from ihp.config import PATH
 
 nm = 1e-3
@@ -990,7 +988,7 @@ class TechIHP(BaseModel):
     # Capacitors
     cmim_min_size: float = 1.14
     cmim_max_size: float = 1000.0
-    rfcmim_min_size: float = 7.0
+    rfcmim_min_size: float = 1.14
     rfcmim_max_size: float = 1000.0
 
     # MIM capacitor model parameters (from sg13g2_tech.json)
@@ -1181,8 +1179,14 @@ routing_strategies = dict(
     route_bundle_metal_corner=route_bundle_metal_corner,
 )
 
-# techParams from CNI layer for cells2 compatibility
-techParams = _CNITech.get("SG13_dev").getTechParams()
+
+def __getattr__(name: str) -> object:
+    if name == "techParams":
+        from cni.tech import Tech as _CNITech
+
+        return _CNITech.get("SG13_dev").getTechParams()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 if __name__ == "__main__":
     LAYER_VIEWS.to_lyp(PATH.lyp)

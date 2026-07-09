@@ -58,6 +58,7 @@ def npn13G2_schematic(
     s.info["models"] = [
         {
             "language": "spice",
+            "implementation": "NgSpice",
             "name": "npn13G2",
             "spice_type": "SUBCKT",
             "library": "ihp/models/ngspice/models/cornerHBT.lib",
@@ -69,7 +70,22 @@ def npn13G2_schematic(
                 "we": "emitter_width * 1e-6",
                 "le": "emitter_length * 1e-6",
             },
-        }
+        },
+        {
+            "language": "spectre",
+            "implementation": "VACASK",
+            "name": "npn13G2",
+            "spice_type": "SUBCKT",
+            "library": "ihp/models/vacask/models/cornerHBT.lib",
+            "sections": ["hbt_typ", "hbt_bcs", "hbt_wcs"],
+            "port_order": ["C", "B", "E", "BN"],
+            "params": {
+                "Nx": "Nx",
+                "Ny": "Ny",
+                "we": "emitter_width * 1e-6",
+                "le": "emitter_length * 1e-6",
+            },
+        },
     ]
     s.create_port(name="C", cross_section=_XS, x=1, y=0, orientation=0)
     s.create_port(name="B", cross_section=_XS, x=-1, y=0, orientation=180)
@@ -648,64 +664,11 @@ def npn13G2(
             layer=layer_activ,
         )
 
-        if Nx > 1:
-            left = -0.89 - le / 2
-            bottom = 0.57 + we / 2 - leoffset - bipwinyoffset - empolyyoffset
-            right = stretchX + 0.89 + le / 2
-            top = 1.01 + we / 2 - leoffset - bipwinyoffset - empolyyoffset
-            c.add_ref(
-                gf.components.rectangle(
-                    size=(
-                        right - left,
-                        top - bottom,
-                    ),
-                    layer=layer_metal1_pin,
-                )
-            ).move((left, bottom))
-            c.add_label(
-                text="C",
-                layer=layer_text,
-                position=(
-                    0.5 * (left + right),
-                    0.5 * (top + bottom),
-                ),
-            )
-        else:
-            left = -0.89 - le / 2
-            bottom = 0.56 + we / 2 + leoffset + bipwinyoffset + empolyyoffset
-            right = stretchX + 0.89 + le / 2
-            top = 0.8 + we / 2 + leoffset + bipwinyoffset + empolyyoffset
-            c.add_ref(
-                gf.components.rectangle(
-                    size=(
-                        right - left,
-                        top - bottom,
-                    ),
-                    layer=layer_metal1_pin,
-                )
-            ).move((left, bottom))
-            c.add_label(
-                text="C",
-                layer=layer_text,
-                position=(
-                    0.5 * (left + right),
-                    0.5 * (top + bottom),
-                ),
-            )
-        # Collector port
-        c.add_port(
-            "C",
-            center=(0.5 * (left + right), 0.5 * (top + bottom)),
-            width=_snap_width_to_grid(top - bottom),
-            layer=layer_metal1_pin,
-            orientation=180.0,
-            port_type="electrical",
-        )
-
-        left = -0.94 - le / 2
-        bottom = -0.81 - we / 2 - leoffset - bipwinyoffset - empolyyoffset
-        right = stretchX + 0.94 + le / 2
-        top = -0.57 - we / 2 - leoffset - bipwinyoffset - empolyyoffset
+    if Nx > 1:
+        left = -0.89 - le / 2
+        bottom = 0.57 + we / 2 - leoffset - bipwinyoffset - empolyyoffset
+        right = stretchX + 0.89 + le / 2
+        top = 1.01 + we / 2 - leoffset - bipwinyoffset - empolyyoffset
         c.add_ref(
             gf.components.rectangle(
                 size=(
@@ -716,60 +679,111 @@ def npn13G2(
             )
         ).move((left, bottom))
         c.add_label(
-            text="B",
+            text="C",
             layer=layer_text,
             position=(
                 0.5 * (left + right),
                 0.5 * (top + bottom),
             ),
         )
-
-        # Base port
-        c.add_port(
-            "B",
-            center=(0.5 * (left + right), 0.5 * (top + bottom)),
-            width=_snap_width_to_grid(top - bottom),
-            layer=layer_metal1_pin,
-            orientation=180.0,
-            port_type="electrical",
-        )
-
-        left = -0.71 - le / 2
-        bottom = -0.335 - we / 2 - leoffset - bipwinyoffset - empolyyoffset
-        right = stretchX + 0.71 + le / 2
-        top = 0.32 + we / 2 + leoffset + bipwinyoffset + empolyyoffset
+    else:
+        left = -0.89 - le / 2
+        bottom = 0.56 + we / 2 + leoffset + bipwinyoffset + empolyyoffset
+        right = stretchX + 0.89 + le / 2
+        top = 0.8 + we / 2 + leoffset + bipwinyoffset + empolyyoffset
         c.add_ref(
             gf.components.rectangle(
                 size=(
                     right - left,
                     top - bottom,
                 ),
-                layer=layer_metal2_pin,
+                layer=layer_metal1_pin,
             )
         ).move((left, bottom))
         c.add_label(
-            text="E",
+            text="C",
             layer=layer_text,
             position=(
                 0.5 * (left + right),
                 0.5 * (top + bottom),
             ),
         )
+    # Collector port
+    c.add_port(
+        "C",
+        center=(0.5 * (left + right), 0.5 * (top + bottom)),
+        width=_snap_width_to_grid(top - bottom),
+        layer=layer_metal1_pin,
+        orientation=180.0,
+        port_type="electrical",
+    )
 
-        pcLabelText = f"Ae={int(Nx):d}*{int(Ny):d}*{le:.2f}*{we:.2f}"
-        c.add_label(text=pcLabelText, layer=layer_text, position=(-1.977, -2.546))
-
-        # Emitter port
-        c.add_port(
-            "E",
-            center=(0.5 * (left + right), 0.5 * (top + bottom)),
-            width=_snap_width_to_grid(top - bottom),
-            layer=layer_metal2_pin,
-            orientation=180.0,
-            port_type="electrical",
+    left = -0.94 - le / 2
+    bottom = -0.81 - we / 2 - leoffset - bipwinyoffset - empolyyoffset
+    right = stretchX + 0.94 + le / 2
+    top = -0.57 - we / 2 - leoffset - bipwinyoffset - empolyyoffset
+    c.add_ref(
+        gf.components.rectangle(
+            size=(
+                right - left,
+                top - bottom,
+            ),
+            layer=layer_metal1_pin,
         )
+    ).move((left, bottom))
+    c.add_label(
+        text="B",
+        layer=layer_text,
+        position=(
+            0.5 * (left + right),
+            0.5 * (top + bottom),
+        ),
+    )
 
-        # TODO: Extend to handle empoly, bipwin, cmet
+    # Base port
+    c.add_port(
+        "B",
+        center=(0.5 * (left + right), 0.5 * (top + bottom)),
+        width=_snap_width_to_grid(top - bottom),
+        layer=layer_metal1_pin,
+        orientation=180.0,
+        port_type="electrical",
+    )
+
+    left = -0.71 - le / 2
+    bottom = -0.335 - we / 2 - leoffset - bipwinyoffset - empolyyoffset
+    right = stretchX + 0.71 + le / 2
+    top = 0.32 + we / 2 + leoffset + bipwinyoffset + empolyyoffset
+    c.add_ref(
+        gf.components.rectangle(
+            size=(
+                right - left,
+                top - bottom,
+            ),
+            layer=layer_metal2_pin,
+        )
+    ).move((left, bottom))
+    c.add_label(
+        text="E",
+        layer=layer_text,
+        position=(
+            0.5 * (left + right),
+            0.5 * (top + bottom),
+        ),
+    )
+
+    pcLabelText = f"Ae={int(Nx):d}*{int(Ny):d}*{le:.2f}*{we:.2f}"
+    c.add_label(text=pcLabelText, layer=layer_text, position=(-1.977, -2.546))
+
+    # Emitter port
+    c.add_port(
+        "E",
+        center=(0.5 * (left + right), 0.5 * (top + bottom)),
+        width=_snap_width_to_grid(top - bottom),
+        layer=layer_metal2_pin,
+        orientation=180.0,
+        port_type="electrical",
+    )
 
     return c
 
@@ -790,6 +804,7 @@ def npn13G2L_schematic(
     s.info["models"] = [
         {
             "language": "spice",
+            "implementation": "NgSpice",
             "name": "npn13G2l",
             "spice_type": "SUBCKT",
             "library": "ihp/models/ngspice/models/cornerHBT.lib",
@@ -799,7 +814,20 @@ def npn13G2L_schematic(
                 "we": "emitter_width * 1e-6",
                 "le": "emitter_length * 1e-6",
             },
-        }
+        },
+        {
+            "language": "spectre",
+            "implementation": "VACASK",
+            "name": "npn13G2l",
+            "spice_type": "SUBCKT",
+            "library": "ihp/models/vacask/models/cornerHBT.lib",
+            "sections": ["hbt_typ", "hbt_bcs", "hbt_wcs"],
+            "port_order": ["C", "B", "E", "BN"],
+            "params": {
+                "we": "emitter_width * 1e-6",
+                "le": "emitter_length * 1e-6",
+            },
+        },
     ]
     s.create_port(name="C", cross_section=_XS, x=1, y=0, orientation=0)
     s.create_port(name="B", cross_section=_XS, x=-1, y=0, orientation=180)
@@ -1382,6 +1410,7 @@ def npn13G2V_schematic(
     s.info["models"] = [
         {
             "language": "spice",
+            "implementation": "NgSpice",
             "name": "npn13G2v",
             "spice_type": "SUBCKT",
             "library": "ihp/models/ngspice/models/cornerHBT.lib",
@@ -1391,7 +1420,20 @@ def npn13G2V_schematic(
                 "we": "emitter_width * 1e-6",
                 "le": "emitter_length * 1e-6",
             },
-        }
+        },
+        {
+            "language": "spectre",
+            "implementation": "VACASK",
+            "name": "npn13G2v",
+            "spice_type": "SUBCKT",
+            "library": "ihp/models/vacask/models/cornerHBT.lib",
+            "sections": ["hbt_typ", "hbt_bcs", "hbt_wcs"],
+            "port_order": ["C", "B", "E", "BN"],
+            "params": {
+                "we": "emitter_width * 1e-6",
+                "le": "emitter_length * 1e-6",
+            },
+        },
     ]
     s.create_port(name="C", cross_section=_XS, x=1, y=0, orientation=0)
     s.create_port(name="B", cross_section=_XS, x=-1, y=0, orientation=180)
@@ -2079,13 +2121,24 @@ def pnpMPA_schematic(length: float = 2, width: float = 0.7) -> DSchematic:
     s.info["models"] = [
         {
             "language": "spice",
+            "implementation": "NgSpice",
             "name": "pnpMPA",
             "spice_type": "SUBCKT",
             "library": "ihp/models/ngspice/models/cornerHBT.lib",
             "sections": ["hbt_typ", "hbt_bcs", "hbt_wcs"],
             "port_order": ["C", "B", "E"],
             "params": {},
-        }
+        },
+        {
+            "language": "spectre",
+            "implementation": "VACASK",
+            "name": "pnpMPA",
+            "spice_type": "SUBCKT",
+            "library": "ihp/models/vacask/models/cornerHBT.lib",
+            "sections": ["hbt_typ", "hbt_bcs", "hbt_wcs"],
+            "port_order": ["C", "B", "E"],
+            "params": {},
+        },
     ]
     s.create_port(name="C", cross_section=_XS, x=1, y=0, orientation=0)
     s.create_port(name="B", cross_section=_XS, x=-1, y=0, orientation=180)

@@ -6,7 +6,7 @@ rm-samples:
 	rm -rf ihp/samples
 
 dev: install
-	curl -sf https://raw.githubusercontent.com/doplaydo/pdk-ci-workflow/main/templates/.pre-commit-config.yaml -o .pre-commit-config.yaml
+	curl -sf https://raw.githubusercontent.com/doplaydo/pdk-ci-workflow-public/main/templates/.pre-commit-config.yaml -o .pre-commit-config.yaml
 	uv run pre-commit install
 
 update-pre:
@@ -14,6 +14,9 @@ update-pre:
 
 tech:
 	python install_tech.py
+
+vacask-models:
+	python scripts/convert_vacask_models.py
 
 test:
 	uv run pytest -s
@@ -41,7 +44,7 @@ gmsh:
 	sudo apt-get install -y python3-gmsh gmsh libglu1-mesa libxi-dev libxmu-dev libglu1-mesa-dev libosmesa6 libegl1
 
 docs-clean:
-	rm -rf docs/_build
+	rm -rf docs/_build docs/palace_demo_cpw.md docs/palace_demo_microstrip.md docs/examples/
 
 mask:
 	python ubcpdk/samples/test_masks.py
@@ -57,14 +60,44 @@ cells:
 cp-docs:
 	cp README.md docs/index.md
 	cp CHANGELOG.md docs/changelog.md
+	mkdir -p docs/examples
 
-docs: cp-docs cells
+notebooks:
+	@if [ "$$(uname -s)" = "Linux" ]; then sudo apt-get install -y --no-install-recommends libglu1-mesa libgl1 libegl1 libosmesa6 2>/dev/null; fi
+	VTK_DEFAULT_RENDER_WINDOW_OFFSCREEN=1 uv run --extra docs --extra simulation jupyter nbconvert --to notebook --execute \
+		--ExecutePreprocessor.timeout=600 \
+		--output-dir /tmp/ihp-notebooks \
+		docs/palace_demo_cpw.ipynb docs/palace_demo_microstrip.ipynb
+	uv run --extra docs jupyter nbconvert --to markdown \
+		--output-dir docs \
+		/tmp/ihp-notebooks/palace_demo_cpw.ipynb \
+		/tmp/ihp-notebooks/palace_demo_microstrip.ipynb
+	uv run python docs/hooks.py docs/palace_demo_cpw.md docs/palace_demo_microstrip.md
+	mkdir -p docs/examples
+	uv run --extra docs jupyter nbconvert --to notebook --execute \
+		--ExecutePreprocessor.timeout=600 \
+		--output-dir /tmp/ihp-notebooks \
+		examples/design_examples/spice_to_yml/spice_to_yml.ipynb \
+		examples/design_examples/spice_and_gds_to_yml/spice_and_gds_to_yml.ipynb
+	uv run --extra docs jupyter nbconvert --to markdown \
+		--output-dir docs/examples \
+		/tmp/ihp-notebooks/spice_to_yml.ipynb \
+		/tmp/ihp-notebooks/spice_and_gds_to_yml.ipynb
+	uv run python docs/hooks.py docs/examples/spice_to_yml.md docs/examples/spice_and_gds_to_yml.md
+	uv run --extra docs jupyter nbconvert --to markdown --execute \
+		--ExecutePreprocessor.timeout=600 \
+		--output-dir docs/examples \
+		--output lna_160ghz \
+		examples/design_examples/ihp_160g_lna/design_data/factory/lna_notebook.ipynb
+	uv run python docs/hooks.py docs/examples/lna_160ghz.md
+
+docs: cp-docs cells notebooks
 	uv run --extra docs zensical build -f docs/zensical.toml
 
-docs-serve: cp-docs
+docs-serve: cp-docs notebooks
 	uv run --extra docs zensical serve -f docs/zensical.toml -a localhost:8080
 
 update-changelog:
 	claude -p "remove links and make a user friendly changelog from @CHANGELOG.md to @docs/changelog.md"
 
-.PHONY: drc drc-sample doc docs docs-pdf build update-changelog
+.PHONY: drc drc-sample doc docs docs-pdf build update-changelog notebooks
